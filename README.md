@@ -14,8 +14,8 @@
 - Ćesko Ammar
 
 ## Opis modula
-Modul: 'Potvrde'
--Ovaj modul omogućava studentu da prijavi zahtjev za željenu
+### Modul: 'Potvrde'
+Ovaj modul omogućava studentu da prijavi zahtjev za željenu
 potvrdu, dokument ili uvjerenje. Svi dokumenti se izdaju od
 strane studentske službe fakulteta. Od strane korisnika koji je
 student šalje se zahtjev, a obrada zahtjeva se vrši od strane
@@ -36,8 +36,8 @@ kada predje taj limit. Broj besplatnih potvrda u toku semestra
 odredjuje studentska služba, a naravno i cijenu onih koje nisu
 besplatne.
 
-Modul: 'Izvještaji'
--Ovaj modul omogućava pregled detaljnih izvještaja za studenta,
+### Modul: 'Izvještaji'
+Ovaj modul omogućava pregled detaljnih izvještaja za studenta,
 njegovom prosjeku, ispitima itd., kao i njegovim finansijskim
 obavezama prema fakultetu ukoliko nije uplaćena neka rata i
 slično. Takodjer, omogućava i detaljan izvještaj o
