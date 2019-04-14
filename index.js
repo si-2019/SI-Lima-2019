@@ -1,22 +1,88 @@
-var mysql = require('mysql')
-let con = mysql.createConnection({
-    host: 'remotemysql.com',
-    user: 'TYQcLL35gV',
-    password: 'BLysSj9ZrP',
-    database: 'TYQcLL35gV'
-})
-con.connect()
+const express = require("express");
+const Sequelize = require('sequelize');
+const db = require(__dirname+'/db.js');
+const Op = Sequelize.Op;
 
 
-var express = require('express')
-var app = express()
-app.listen(process.env.PORT || 9123)
+db.sequelize.sync().then(function(){});
+const app = express();
+app.get('/dajSveZahtjeve',async function(req,res){
+    let odgovor = {zahtjevi:[
+    ]};
+db.zahtjevZaPotvrdu.findAll().then( async rez=>{
+for(let i=0;i<rez.length;++i){
+        let rez1 = await db.svrha.findOne({where:{id:rez[i].idSvrhe}});
+        let rez2 = await db.korisnik.findOne({where:{id:rez[i].idStudenta}});
+        let objekat = {
+                id:rez[i].idZahtjev,
+                vrsta: rez1.nazivSvrhe,
+                datumZahtjeva:rez[i].datumZahtjeva,
+                oznacen:false,
+                info:{
+                    idStudenta:rez2.id,
+                    ime:rez2.ime,
+                    prezime:rez2.prezime,
+                    indeks:rez2.indeks
+                }
+            }
+        odgovor.zahtjevi.push(objekat);
+}
+res.json(odgovor);    
+});
 
-var bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-
-require('./requests/farisReqs.js')(app, con)
-
-
-module.exports = app
+});
+app.get('/dajObradjeneZahtjeve',async function(req,res){
+    let odgovor = {zahtjevi:[
+    ]};
+db.zahtjevZaPotvrdu.findAll({where:{obradjen:true}}).then( async rez=>{
+for(let i=0;i<rez.length;++i){
+        let rez1 = await db.svrha.findOne({where:{id:rez[i].idSvrhe}});
+        let rez2 = await db.korisnik.findOne({where:{id:rez[i].idStudenta}});
+        let objekat = {
+                id:rez[i].idZahtjev,
+                vrsta: rez1.nazivSvrhe,
+                datumZahtjeva:rez[i].datumZahtjeva,
+                oznacen:false,
+                info:{
+                    idStudenta:rez2.id,
+                    ime:rez2.ime,
+                    prezime:rez2.prezime,
+                    indeks:rez2.indeks
+                }
+            }
+        odgovor.zahtjevi.push(objekat);
+}
+res.json(odgovor);    
+});
+});
+app.get('/dajNeobradjeneZahtjeve',async function(req,res){
+    let odgovor = {zahtjevi:[
+    ]};
+db.zahtjevZaPotvrdu.findAll({where:{obradjen:false}}).then( async rez=>{
+for(let i=0;i<rez.length;++i){
+        let rez1 = await db.svrha.findOne({where:{id:rez[i].idSvrhe}});
+        let rez2 = await db.korisnik.findOne({where:{id:rez[i].idStudenta}});
+        let objekat = {
+                id:rez[i].idZahtjev,
+                vrsta: rez1.nazivSvrhe,
+                datumZahtjeva:rez[i].datumZahtjeva,
+                oznacen:false,
+                info:{
+                    idStudenta:rez2.id,
+                    ime:rez2.ime,
+                    prezime:rez2.prezime,
+                    indeks:rez2.indeks
+                }
+            }
+        odgovor.zahtjevi.push(objekat);
+}
+res.json(odgovor);    
+});
+});
+app.post('/obrada',async function(req,res){
+    let ajdi =req.params.id;
+    db.zahtjevZaPotvrdu.update({obradjen:true,datumObrade:Date.now()},{where:{id:ajdi}}).then(rez=>{
+        res.end();
+    });
+});
+app.listen(8080);
