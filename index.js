@@ -1,4 +1,6 @@
 const express = require("express");
+var cors = require('cors');
+
 const Sequelize = require('sequelize');
 const db = require(__dirname+'/db.js');
 const Op = Sequelize.Op;
@@ -6,6 +8,7 @@ const Op = Sequelize.Op;
 
 db.sequelize.sync().then(function(){});
 const app = express();
+app.use(cors());
 app.get('/dajSveZahtjeve',async function(req,res){
     let odgovor = {zahtjevi:[
     ]};
