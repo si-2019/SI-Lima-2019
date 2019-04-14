@@ -17,7 +17,7 @@ for(let i=0;i<rez.length;++i){
         let rez1 = await db.svrha.findOne({where:{id:rez[i].idSvrhe}});
         let rez2 = await db.korisnik.findOne({where:{id:rez[i].idStudenta}});
         let objekat = {
-                id:rez[i].idZahtjev,
+                id:rez[i].id,
                 vrsta: rez1.nazivSvrhe,
                 datumZahtjeva:rez[i].datumZahtjeva,
                 oznacen:false,
@@ -42,7 +42,7 @@ for(let i=0;i<rez.length;++i){
         let rez1 = await db.svrha.findOne({where:{id:rez[i].idSvrhe}});
         let rez2 = await db.korisnik.findOne({where:{id:rez[i].idStudenta}});
         let objekat = {
-                id:rez[i].idZahtjev,
+                id:rez[i].id,
                 vrsta: rez1.nazivSvrhe,
                 datumZahtjeva:rez[i].datumZahtjeva,
                 oznacen:false,
@@ -66,7 +66,7 @@ for(let i=0;i<rez.length;++i){
         let rez1 = await db.svrha.findOne({where:{id:rez[i].idSvrhe}});
         let rez2 = await db.korisnik.findOne({where:{id:rez[i].idStudenta}});
         let objekat = {
-                id:rez[i].idZahtjev,
+                id:rez[i].id,
                 vrsta: rez1.nazivSvrhe,
                 datumZahtjeva:rez[i].datumZahtjeva,
                 oznacen:false,
