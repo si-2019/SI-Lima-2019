@@ -1,7 +1,7 @@
-# SI-Lima-2019
+﻿# SI-Lima-2019
 # Tim Lima
 
-## Moduli: 'Potvrde' i 'Izvještaji'
+## Modul: 'Potvrde'
 
 ## Članovi tima:
 - Kovačević Faris (vođa tima)
@@ -14,7 +14,6 @@
 - Ćesko Ammar
 
 ## Opis modula
-### Modul: 'Potvrde'
 Ovaj modul omogućava studentu da prijavi zahtjev za željenu
 potvrdu, dokument ili uvjerenje. Svi dokumenti se izdaju od
 strane studentske službe fakulteta. Od strane korisnika koji je
@@ -36,10 +35,23 @@ kada predje taj limit. Broj besplatnih potvrda u toku semestra
 odredjuje studentska služba, a naravno i cijenu onih koje nisu
 besplatne.
 
-### Modul: 'Izvještaji'
-Ovaj modul omogućava pregled detaljnih izvještaja za studenta,
-njegovom prosjeku, ispitima itd., kao i njegovim finansijskim
-obavezama prema fakultetu ukoliko nije uplaćena neka rata i
-slično. Takodjer, omogućava i detaljan izvještaj o
-odgovarajućem predmetu, ispitu, njegovoj prolaznosti,
-izlaznosti itd.
+### Objašnjenje file-ova na branchu
+Ovdje se nalazi glavni backend za potvrde (index.js).
+
+Ako iko bude radio "nadogradnju" backenda u smislu app. ruta kao i modela, neka na ovaj branch ga pošalje.
+
+Baza:
+Povezano sa bazom na remotemysql.com, podaci za bazu su:
+Link do baze: https://remotemysql.com/phpmyadmin/
+Username: TYQcLL35gV
+Database: TYQcLL35gV
+Password: BLysSj9ZrP
+
+Model:
+korisnik, predmet, svrhaPotvrde, zahtjevZaPotvrdu
+
+Veze:
+db.js ima definisane veze za:
+	korisnik:predmet (m:n), odn. korisnik ima više predmeta i predmet ima više korisnika (studenata)
+	korisnik:zahtjevZaPotvrdu (1:n), odn. korisnik ima više zahtjeva za potvrdu
+	zahtjevZaPotvrdu:svrha (1:1), odn. zahtjev za potvrdu ima jednu i samo jednu svrhu.
