@@ -32,6 +32,7 @@ app.get("/dajSveZahtjeve", async function(req, res) {
       };
       odgovor.zahtjevi.push(objekat);
     }
+    console.log(odgovor);
     res.json(odgovor);
   });
 });
@@ -90,16 +91,13 @@ app.get("/dajNeobradjeneZahtjeve", async function(req, res) {
 app.post("/obrada", async function(req, res) {
   let ajdi = req.body.zahtjevi;
   await ajdi.forEach(el => {
-    db.zahtjevZaPotvrdu
-      .update(
-        { obradjen: true, datumObrade: Date.now() },
-        { where: { id: el} }
-      )
-      
-  })
+    db.zahtjevZaPotvrdu.update(
+      { obradjen: true, datumObrade: Date.now() },
+      { where: { id: el } }
+    );
+  });
 
-    res.sendStatus(200);
-    res.end();
- 
+  res.sendStatus(200);
+  res.end();
 });
 app.listen(8080);
