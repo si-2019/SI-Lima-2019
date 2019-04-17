@@ -42,6 +42,7 @@ Ako iko bude radio "nadogradnju" backenda u smislu app. ruta kao i modela, neka 
 
 Baza:
 Povezano sa bazom na remotemysql.com, podaci za bazu su:
+
 Link do baze: https://remotemysql.com/phpmyadmin/
 Username: TYQcLL35gV
 Database: TYQcLL35gV
