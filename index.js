@@ -100,4 +100,4 @@ app.post("/obrada", async function(req, res) {
   res.sendStatus(200);
   res.end();
 });
-app.listen(8080);
+app.listen(31912);
