@@ -1,4 +1,4 @@
-Ovdje se nalazi glavni backend za izvještaje (izvjestaji.js).
+Ovdje se nalazi glavni backend za potvrde (index.js).
 
 Ako iko bude radio "nadogradnju" backenda u smislu app. ruta kao i modela, neka na ovaj branch ga pošalje.
 

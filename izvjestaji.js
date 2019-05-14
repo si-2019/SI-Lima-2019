@@ -133,4 +133,10 @@ app.get("/potvrda/:index/student", async function(req, res) {
       });
   }
 });
+app.get('/Izvjestaji/dajDrugeParcijale', async function(req,res){
+//console.log("Podao sam ga na lima");
+let now = new Date();
+//komentar
+  res.json({message:["17928","Džemil","Džigal",now.toLocaleDateString(),"20"]});
+});
 app.listen(31912);
