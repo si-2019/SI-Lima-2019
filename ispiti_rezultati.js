@@ -1,8 +1,8 @@
 const Sequelize = require("sequelize");
 module.exports = function(sequelize,DataTypes){
     const ispiti_rezultati = sequelize.define("ispiti_rezultati",{
-            idIspit:Sequelize.INTEGER,
-            idStudent:Sequelize.INTEGER,
+            idIspit:{type:Sequelize.INTEGER,primaryKey:true},
+            idStudent:{type:Sequelize.INTEGER,primaryKey:true},
             bodovi:Sequelize.INTEGER
         },
         {freezeTableName:true,

@@ -1,6 +1,7 @@
 const Sequelize = require("sequelize");
 module.exports = function(sequelize,DataTypes){
     const ispit = sequelize.define("Ispit",{
+            idIspit:{type:Sequelize.INTEGER,primaryKey:true},
             idProfesor:Sequelize.INTEGER,
             idPredmet:Sequelize.INTEGER,
             brojStudenata:Sequelize.INTEGER,

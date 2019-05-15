@@ -133,10 +133,41 @@ app.get("/potvrda/:index/student", async function(req, res) {
       });
   }
 });
-app.get('/Izvjestaji/dajDrugeParcijale', async function(req,res){
+app.get('/Izvjestaji/dajDrugeParcijale/:index/:predmet', async function(req,res){
 //console.log("Podao sam ga na lima");
-let now = new Date();
-//komentar
-  res.json({message:["17928","Džemil","Džigal",now.toLocaleDateString(),"20"]});
+let _indeks = req.params.index;
+let predmet = req.params.predmet;
+
+let rezultati = [];
+db.korisnik.findOne({where:{indeks:_indeks}}).then(async stu=>{
+db.predmet.findOne({where:{naziv:predmet}}).then(
+  async pred=>{
+    if(pred==null || pred==undefined) res.json({message:"404, nepostojeći predmet"});
+    else{
+      db.ispit.findAll({where:{idPredmet:pred.id,tipIspita:"Drugi parcijalni"}}).then(
+        async ispiti=>{
+          let ispiti_id=[];
+          for(let i=0;i<ispiti.length;i++) ispiti_id.push(ispiti[i].idIspit); 
+          db.ispiti_rezultati.findAll({where:{
+            idIspit: {[Op.in]:ispiti_id},
+            idStudent: stu.id
+          }}).then(konacno=>{
+            let odg=[];
+            for(let i=0;i<konacno.length;i++)
+              odg.push({
+                indeks:_indeks,
+                ime:stu.ime,
+                prezime:stu.prezime,
+                datumIspita:ispiti[i].termin,
+                brojBodova:konacno[i].bodovi
+              });
+           res.json(odg);
+          });
+        }
+      );
+    }
+  }
+);
+});
 });
 app.listen(31912);
