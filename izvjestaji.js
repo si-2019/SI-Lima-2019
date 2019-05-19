@@ -170,4 +170,47 @@ db.predmet.findOne({where:{naziv:predmet}}).then(
 );
 });
 });
-app.listen(31912);
+//app.listen(31912);
+
+app.get('/Izvjestaji/dajPolozeneIspite/:index', function(req,res){
+  let _indeks = req.params.index;
+  //let predmet = req.params.predmet; 
+  //let tekucaGodina = Date.getFullYear();
+  
+  db.korisnik.findOne({where:{indeks : _indeks}}).then(async student=>{
+    if(student == null || student == undefined) res.json({message : "Student s tim indeksom ne postoji!"});
+    db.ispiti_rezultati.findAll({where:{idStudent : student.id}, bodovi: {$gt: 9}}).then(async rezultati=>{
+      var listaPromisea1 = [];
+      for(var i=0; i<rezultati.length; i++) {
+        listaPromisea1.push(db.ispit.findOne({where: {idIspit : rezultati[i].idIspit }}));
+      }
+      var listaPromisea2 = [];
+      var tmp;
+      Promise.all(listaPromisea1).then(function(ispitiFilter) {
+        tmp = ispitiFilter;
+        for(var j=0; j<ispitiFilter.length; j++) {
+          listaPromisea2.push(db.predmet.findOne({where: {id: ispitiFilter[j].idPredmet}}));
+        }
+
+        return Promise.all(listaPromisea2);
+      }).then(function(predmeti) {
+        var odgovor = [];
+        
+        for(var k=0; k<predmeti.length; k++) {
+          odgovor.push({
+            ime: student.ime,
+            prezime: student.prezime,
+            predmet: predmeti[k].naziv,
+            bodovi: rezultati[k].bodovi,
+            datum: tmp[k].termin
+          });
+        }
+        res.json(odgovor);
+      });
+    });
+  });
+});
+
+app.listen(31912, () => {
+  console.log("Server started, listening at port 31912");
+});
