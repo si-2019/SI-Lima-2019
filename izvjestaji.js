@@ -229,7 +229,7 @@ app.get("/Izvjestaji/dajPolozeneIspite/:index", function(req, res) {
   });
 });
 
-// I_US_25
+// I_US_25, I_US_26
 app.get("/dajPredmete", async function(req, res) {
   let odgovor = { predmeti: [] };
   db.predmet.findAll().then(async rez => {
@@ -418,6 +418,92 @@ app.get("/izvjestaj/:index/:predmet/bodovi", async function(req, res) {
   }
 });
 
+//I_US_26
+app.get("/izvjestaj/:index/:predmet/bodoviPrveParcijale", async function(
+  req,
+  res
+) {
+  let odgovor = { bodovi: [], informacije: [] };
+  let ind = req.params.index;
+  let pred = req.params.predmet;
+
+  let predmetstudent;
+  let ispiti = []; //ispiti za predmet
+
+  let objekat = {
+    postojiStudent: true,
+    slusaPredmet: true
+  };
+
+  let student = await db.korisnik.findOne({
+    where: { indeks: ind }
+  });
+  //ako nema studenta sa indeksom unesenim
+  if (student == null) {
+    objekat.postojiStudent = false;
+    odgovor.informacije.push(objekat);
+    res.json(odgovor);
+    //ako ima studenta da unesenim indeksom
+  } else {
+    //ako ima studenta, nađi predmet u bazi
+    let izabraniPredmet = await db.predmet.findOne({
+      where: { naziv: pred }
+    });
+    //nadji sve predmete koje slusa student i od njih vidi ima li izabranog
+    db.predmetStudent
+      .findAll({ where: { idStudent: student.id } })
+      .then(async rez => {
+        for (let i = 0; i < rez.length; i++) {
+          if (rez[i].idPredmet == izabraniPredmet.id) predmetstudent = rez[i];
+        }
+        //ako student ne slusa taj predmet
+        if (predmetstudent == null) {
+          objekat.slusaPredmet = false;
+          odgovor.informacije.push(objekat);
+          res.json(odgovor);
+        } else {
+          //---- PRVE PARCIJALE PREDMETA
+          //nadji ispite za taj predmet
+          db.ispit
+            .findAll({ where: { idPredmet: izabraniPredmet.id } })
+            .then(async rez => {
+              //ako nema rezultata nije bilo ispita
+              if (rez.length != 0) {
+                //bilo je ispita
+                ispiti = rez;
+                //naci rezultate tih ispita za prvu parcijalu
+                for (let i = 0; i < ispiti.length; i++) {
+                  let nadjeni = await db.ispitBodovi.findOne({
+                    where: {
+                      idKorisnika: student.id,
+                      idIspita: ispiti[i].idIspit
+                    }
+                  });
+                  if (nadjeni != null) {
+                    let tipIspita = ispiti[i].tipIspita.toLowerCase();
+                    tipIspita = tipIspita.replace(/\s/g, "");
+                    if (tipIspita.includes("prvi")) {
+                      let objekat1 = {
+                        id: nadjeni.idIspita,
+                        prviParcijalni: nadjeni.bodovi,
+                        moguciBodPrve: 20, //trenutno hardkodirano, dok se ne unese u bazu, ako se uopste unese LOL
+                        datum: ispiti[i].termin
+                      };
+                      odgovor.bodovi.push(objekat1);
+                    }
+                  }
+                }
+                odgovor.informacije.push(objekat);
+                res.json(odgovor);
+              } else {
+                odgovor.informacije.push(objekat);
+                res.json(odgovor);
+              }
+            });
+        }
+      });
+  }
+});
 app.listen(31912, () => {
   console.log("Server started, listening at port 31912");
 });
