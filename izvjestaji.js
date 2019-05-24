@@ -504,6 +504,36 @@ app.get("/izvjestaj/:index/:predmet/bodoviPrveParcijale", async function(
       });
   }
 });
+
+//user story 28 - Kao student, želim da imam mogućnost za odabir izvještaja o ostvarenom broju bodova na 
+//projektima za pojedini predmet, kako bih dobio željene informacije
+//salje se id studenta i predmeta, vracaju se podaci o ostvarenom broju bodova na projektima za taj predmet i tog studenta
+app.get('/dajBodoveProjekata/:index/:predmet', function(req, res) {
+  var indeksParam = req.params.index;
+  var predmetParam = req.params.predmet; 
+  db.korisnik.findOne({where : {indeks: indeksParam}}).then(function(student) {
+    db.predmet.findOne({where : {naziv : predmetParam}}).then(function(predmet) {
+      db.projekat.findAll({where : {idKorisnik: student.id, idPredmet: predmet.id}}).then(function(projekti) {
+        var odgovor = [];
+        //buduci da baza nije dobro dizajnirana, u njoj se ne nalaze podaci o ostvarenom broju bodova na nekom projektu
+        //uradjena je improvizacija pa ce bodovi na projektu biti postotak uradjenog: proizvod 'progress' (u tabeli 'Projekat') i moguceg broja bodova
+        for(var i=0; i<projekti.length; i++) {
+          var bodovi = projekti[i].progress*projekti[i].moguciBodovi;
+          odgovor.push({
+            ime: student.ime,
+            prezime: student.prezime,
+            indeks: student.indeks,
+            predmet: predmet.naziv,
+            projekatNaziv: projekti[i].nazivProjekta,
+            projekatBodovi: bodovi
+          });
+        }
+        res.json(odgovor);
+      });
+    });
+  });
+});
+
 app.listen(31912, () => {
   console.log("Server started, listening at port 31912");
 });
