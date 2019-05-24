@@ -229,7 +229,7 @@ app.get("/Izvjestaji/dajPolozeneIspite/:index", function(req, res) {
   });
 });
 
-// I_US_25, I_US_26
+// I_US_25, I_US_26, I_US_56
 app.get("/dajPredmete", async function(req, res) {
   let odgovor = { predmeti: [] };
   db.predmet.findAll().then(async rez => {
@@ -534,7 +534,7 @@ app.get('/dajBodoveProjekata/:index/:predmet', function(req, res) {
   });
 });
 
-//I_US_47
+//I_US_47, I_US_56
 app.get("/dajAktuelnuAkademskuGodinu", async function(req, res) {
   let odgovor;
   db.akademskaGodina.findOne({ where: { aktuelna: "1" } }).then(async rez => {
@@ -645,6 +645,97 @@ app.get('/dajIzlaznostNaIspit/:predmet/:tipIspita', function(req, res) {
       });
     });
   });
+});
+
+//I_US_56
+app.get("/izvjestaj/:predmet/:akademska/prvaParcijalaPredmeta", async function(
+  req,
+  res
+) {
+  let odgovor = { studenti: [] };
+  let pred = req.params.predmet; //predmet
+  let aktuelnaAkademska = req.params.akademska; //id akademske
+
+  let objekat = {
+    predmetNaGodini: true,
+    biloIspita: true,
+    id: null,
+    ime: "/",
+    prezime: "/",
+    index: "/",
+    bodovi: "/",
+    datum: "/"
+  };
+  //nadji odabrani predmet id=8
+  let izabraniPredmet = await db.predmet.findOne({
+    where: { naziv: pred }
+  });
+  //nadji sve studente na predmetu id=3 duzina 1
+  let idstudentPredmet = await db.predmetStudent.findAll({
+    where: {
+      idPredmet: izabraniPredmet.id,
+      idAkademskaGodina: aktuelnaAkademska
+    }
+  });
+  //ako nema studenata na osnovu uslova, predmet nije na godini
+  if (idstudentPredmet.length === 0) {
+    objekat.predmetNaGodini = false;
+    odgovor.studenti.push(objekat);
+    res.json(odgovor);
+  }
+  //ako je predmet na godini nadji prve parcijale
+  else {
+    //nadji prve parcijale predmeta id=1 duzina 1
+    let prveParcijale = await db.ispit.findAll({
+      where: { idPredmet: izabraniPredmet.id, tipIspita: "Prvi parcijalni" }
+    });
+    //nije bilo ispita na predmetu
+    if (prveParcijale.length === 0) {
+      objekat.biloIspita = false;
+      odgovor.studenti.push(objekat);
+      res.json(odgovor);
+    }
+    //bilo prvih parcijala, nadji podatke tih prvih parcijala u ispiti_rezultati
+    else {
+      for (let i = 0; i < prveParcijale.length; i++) {
+        for (let j = 0; j < idstudentPredmet.length; j++) {
+          //nadji rezultate jedne od odrzane prve parcijale
+          await db.ispitBodovi
+            .findOne({
+              where: {
+                idIspita: prveParcijale[i].idIspit,
+                idKorisnika: idstudentPredmet[j].idStudent
+              }
+            })
+            .then(async rez => {
+              //nadji studenta sa id-om
+              let student = await db.korisnik.findOne({
+                where: { id: idstudentPredmet[j].idStudent }
+              });
+              let objekat = {
+                predmetNaGodini: true,
+                biloIspita: true,
+                id: student.id,
+                ime: student.ime,
+                prezime: student.prezime,
+                index: student.indeks,
+                bodovi: "/",
+                datum: prveParcijale[i].termin
+              };
+              //ako je rez null, znaci da student nije izasao na ispit
+              if (rez === null) {
+                odgovor.studenti.push(objekat);
+              } else {
+                //ako je izasao daj bodove
+                objekat.bodovi = rez.bodovi;
+                odgovor.studenti.push(objekat);
+              }
+            });
+        }
+      }
+      res.json(odgovor);
+    }
+  }
 });
 
 app.listen(31912, () => {
