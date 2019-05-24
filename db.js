@@ -30,6 +30,7 @@ db.prisustvoTutorijali = sequelize.import(
 db.prisustvoVjezbe = sequelize.import(__dirname + "/prisustvoVjezbe.js");
 db.projekat = sequelize.import(__dirname + "/projekat.js");
 db.zadaca = sequelize.import(__dirname + "/zadaca.js");
+db.akademskaGodina = sequelize.import(__dirname + "/akademskaGodina.js");
 //definisanje veza
 //1:n
 db.korisnik.hasMany(db.zahtjevZaPotvrdu, {

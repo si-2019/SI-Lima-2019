@@ -534,6 +534,93 @@ app.get('/dajBodoveProjekata/:index/:predmet', function(req, res) {
   });
 });
 
+//I_US_47
+app.get("/dajAktuelnuAkademskuGodinu", async function(req, res) {
+  let odgovor;
+  db.akademskaGodina.findOne({ where: { aktuelna: "1" } }).then(async rez => {
+    if (rez === null) {
+      odgovor = { Server: "Nema aktuelne godine" };
+      res.json(odgovor);
+    } else {
+      let objekat = {
+        id: rez.id,
+        naziv: rez.naziv,
+        aktuelna: rez.aktuelna,
+        pocetakZimskog: rez.pocetak_zimskog_semestra,
+        krajZimskog: rez.kraj_zimskog_semestra,
+        pocetakLjetnog: rez.pocetak_ljetnog_semestra,
+        krajLjetnog: rez.kraj_ljetnog_semestra
+      };
+      odgovor = objekat;
+      res.json(odgovor);
+    }
+  });
+});
+
+//I_US_47
+app.get("/izvjestaj/:index/:akademska/polozeniPredmeti", async function(
+  req,
+  res
+) {
+  let odgovor = { predmeti: [] };
+  let ind = req.params.index;
+  let aktuelnaAkademska = req.params.akademska; //id akademske
+
+  let objekat = {
+    postojiStudent: true,
+    naGodini: true,
+    id: null,
+    predmet: "/",
+    ocjena: "/"
+  };
+
+  let student = await db.korisnik.findOne({
+    where: { indeks: ind }
+  });
+  //ako nema studenta sa indeksom unesenim
+  if (student == null) {
+    objekat.postojiStudent = false;
+    odgovor.predmeti.push(objekat);
+    res.json(odgovor);
+    //ako ima studenta da unesenim indeksom
+  } else {
+    //nadji sve predmete koje je polozio student u aktuelnoj godini
+    db.predmetStudent
+      .findAll({
+        where: { idStudent: student.id, idAkademskaGodina: aktuelnaAkademska }
+      })
+      .then(async rez => {
+        //ako ga nema na godini
+        if (rez.length === 0) {
+          objekat.naGodini = false;
+          odgovor.predmeti.push(objekat);
+          res.json(odgovor);
+        } else {
+          //ako je polozio barem 1
+          for (let i = 0; i < rez.length; i++) {
+            if (rez[i].ocjena != null) {
+              //ako je upisana ocjena nadji naziv predmeta
+              let pomocni = await db.predmet.findOne({
+                where: { id: rez[i].idPredmet }
+              });
+              let objekat = {
+                postojiStudent: true,
+                naGodini: true,
+                id: pomocni.id,
+                predmet: pomocni.naziv,
+                ocjena: rez[i].ocjena
+              };
+              odgovor.predmeti.push(objekat);
+            }
+          }
+          //ako nije polozio nijedan predmet
+          if (odgovor.predmeti.length === 0) odgovor.predmeti.push(objekat);
+          res.json(odgovor);
+        }
+      });
+  }
+});
+
 app.listen(31912, () => {
   console.log("Server started, listening at port 31912");
 });
