@@ -621,6 +621,32 @@ app.get("/izvjestaj/:index/:akademska/polozeniPredmeti", async function(
   }
 });
 
+// User story 32 - Kao student, želim da imam mogućnost za odabir izvještaja o izlaznosti na parcijalne ispite za 
+// određeni predmet u tekućoj godini, kako bih dobio željene informacije
+app.get('/dajIzlaznostNaIspit/:predmet/:tipIspita', function(req, res) {
+  var predmetParam = req.params.predmet;
+  var tipParam = req.params.tipIspita;
+
+  db.predmet.findOne({where: {naziv: predmetParam}}).then(function(predmet) {
+    db.ispit.findOne({where: {idPredmet: predmet.id, tipIspita: tipParam}}).then(function(ispit) {
+      if(ispit == null) res.json({message: "ispit ne postoji!"});
+      db.ispiti_rezultati.findAll({where: {idIspit: ispit.idIspit}}).then(function(rezultati) {
+        var izlaznostStudenata = (rezultati.length / ispit.brojStudenata) * 100;
+
+        var odgovor = {
+          predmet: predmetParam,
+          tipIspita: tipParam,
+          brojStudenata: ispit.brojStudenata,
+          izasloStudenata: rezultati.length,
+          izlaznost: izlaznostStudenata // ovo je u procentima
+        }
+
+        res.json(odgovor);
+      });
+    });
+  });
+});
+
 app.listen(31912, () => {
   console.log("Server started, listening at port 31912");
 });
