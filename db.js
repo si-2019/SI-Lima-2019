@@ -31,6 +31,9 @@ db.prisustvoVjezbe = sequelize.import(__dirname + "/prisustvoVjezbe.js");
 db.projekat = sequelize.import(__dirname + "/projekat.js");
 db.zadaca = sequelize.import(__dirname + "/zadaca.js");
 db.akademskaGodina = sequelize.import(__dirname + "/akademskaGodina.js");
+db.student_zadatak = sequelize.import(__dirname+"/student_zadatak.js");
+db.zadatak = sequelize.import(__dirname+"/zadatak.js");
+
 //definisanje veza
 //1:n
 db.korisnik.hasMany(db.zahtjevZaPotvrdu, {
@@ -50,6 +53,10 @@ db.predmet.hasMany(db.ispit, {
 db.predmet.hasMany(db.projekat, {
   foreignKey: "idPredmet",
   as: "projekti"
+});
+db.zadaca.hasMany(db.zadatak,{
+  foreignKey: "brojZadatka",
+  as:"zadaci"
 });
 //1:1
 db.zahtjevZaPotvrdu.belongsTo(db.svrha, { foreignKey: "idSvrhe" });
