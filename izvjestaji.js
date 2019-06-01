@@ -179,7 +179,47 @@ app.get("/Izvjestaji/dajDrugeParcijale/:index/:predmet", async function(
     });
   });
 });
-//app.listen(31912);
+
+app.get("/Izvjestaji/dajPredmetPoGodini/:predmetId/:godinaId:/:filter/:datum",function(req,res){
+  let id_predmeta = req.params.predmetId;
+  let id_godine = req.params.godinaId;
+  let filter = req.params.filter;
+  let datum =  Date(req.params.datum);
+  db.predmet.findOne({where:{id:id_predmeta}}).then(async p=>{
+    db.akademskaGodina.findOne({where:{id:id_godine}}).then(async g=>{
+        switch(filter){
+          case "Prvi parcijalni":
+            db.ispit.findAll({where:{idPredmet:p.idPredmet,tipIspita:"Prvi parcijalni",termin:datum}}).then(async ispiti=>{
+              let nizIspitId = [];  for(let i=0;i<ispiti.length;i++) nizIspitId.push(ispiti[i].id);
+              db.ispiti_rezultati.findAll({where:{idIspit:{[op.in]:nizIspitId}}}).then(async rezultati_ispita=>{
+                // rezultati_ispita imaju podatke o studentima koji su položili kao i njihove bodove
+                db.predmetStudent.findAll({where:{idPredmet:id_predmeta}}).then(async sviStudentiNaPredmetu=>{
+                  //unutar sviKojiSuIzasli postoji ID-evi studenta, kao i akademska godina, ocjena i datum upisa ocjene za pojedini predmet.
+                    let id_studenata = []; for(let i=0;i<sviStudentiNaPredmetu.length;i++) id_studenata.push(sviStudentiNaPredmetu[i].idStudent)
+                    let ukupno = sviStudentiNaPredmetu.length;
+                    let izaslo = 0;
+                    let data = [];
+                    for(let i=0;i<rezultati_ispita.length;i++){
+                      if(id_studenata.contains(rezultati_ispita[i].idStudent)) izaslo++;
+                      if(rezultati_ispita[i].bodovi>=10) data.push(rezultati_ispita[i].bodovi);
+                    }
+                    let polozilo = data.length;
+
+                    res.json({
+                      izasloNaIspit:izaslo,
+                      ukupnoStudenata:ukupno,
+                      polozilo:polozilo,
+                      data: data
+                    });
+                });
+              });
+            });
+        default:
+          res.json({message:"Greška na serveru"});
+        }
+    });
+  });
+});
 
 app.get("/Izvjestaji/dajPolozeneIspite/:index", function(req, res) {
   let _indeks = req.params.index;
