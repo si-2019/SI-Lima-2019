@@ -330,7 +330,52 @@ app.get("/Izvjestaji/dajPredmetPoGodini/:predmetId/:godinaId:/:filter/:datum",fu
     });
   });
 });
-
+// Prosjek studenta po godinama
+app.get("/izvjestaj/prosjekPoGodinama/:idStudenta", function(req, res) {
+  var message;
+  db.predmetStudent
+    .findAll({
+      where: {
+        idStudent: req.params.idStudenta,
+        ocjena: { [Sequelize.Op.not]: null }
+      }
+    })
+    .then(async function(predmeti) {
+      if (predmeti.length === 0) {
+        message = "Nema upisanih ocjena";
+        res.json([{ message: message }]);
+      } else {
+        var prosjeci = [];
+        predmeti.sort((a, b) => {
+          return a.idAkademskaGodina > b.idAkademskaGodina;
+        });
+        var i = 0;
+        while (i < predmeti.length) {
+          var prosjek = [];
+          var ak = await db.akademskaGodina.findOne({
+            where: { id: predmeti[i].idAkademskaGodina }
+          });
+          var naziv = ak.naziv;
+          var godinaId = predmeti[i].idAkademskaGodina;
+          var ukupni = 0;
+          let brojPredmeta = 0;
+          let god = predmeti[i].idAkademskaGodina;
+          while (i < predmeti.length && predmeti[i].idAkademskaGodina === god) {
+            brojPredmeta++;
+            ukupni = ukupni + predmeti[i].ocjena;
+            i++;
+          }
+          prosjeci.push({
+            naziv: naziv,
+            godinaId: godinaId,
+            prosjek: ukupni / brojPredmeta
+          });
+        }
+        prosjeci.sort((a, b) => a.naziv.substr(0, 4) - b.naziv.substr(0, 4));
+        res.json(prosjeci);
+      }
+    });
+});
 app.get("/Izvjestaji/dajPolozeneIspite/:index", function(req, res) {
   let _indeks = req.params.index;
   //let predmet = req.params.predmet;
