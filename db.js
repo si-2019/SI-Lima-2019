@@ -55,7 +55,7 @@ db.predmet.hasMany(db.projekat, {
   as: "projekti"
 });
 db.zadaca.hasMany(db.zadatak,{
-  foreignKey: "brojZadatka",
+  foreignKey: "idZadaca",
   as:"zadaci"
 });
 //1:1

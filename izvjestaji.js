@@ -133,10 +133,7 @@ app.get("/potvrda/:index/student", async function(req, res) {
       });
   }
 });
-app.get("/Izvjestaji/dajDrugeParcijale/:index/:predmet", async function(
-  req,
-  res
-) {
+app.get("/Izvjestaji/dajDrugeParcijale/:index/:predmet", async function(req,res) {
   //console.log("Podao sam ga na lima");
   let _indeks = req.params.index;
   let predmet = req.params.predmet;
@@ -180,7 +177,7 @@ app.get("/Izvjestaji/dajDrugeParcijale/:index/:predmet", async function(
   });
 });
 
-app.get("/Izvjestaji/dajPredmetPoGodini/:predmetId/:godinaId:/:filter/:datum",function(req,res){
+app.get("/Izvjestaji/dajPredmetPoGodini/:predmetId/:godinaId/:filter/:datum",function(req,res){
   let id_predmeta = req.params.predmetId;
   let id_godine = req.params.godinaId;
   let filter = req.params.filter;
@@ -189,9 +186,9 @@ app.get("/Izvjestaji/dajPredmetPoGodini/:predmetId/:godinaId:/:filter/:datum",fu
     db.akademskaGodina.findOne({where:{id:id_godine}}).then(async g=>{
         switch(filter){
           case "Prvi parcijalni":
-            db.ispit.findAll({where:{idPredmet:p.idPredmet,tipIspita:"Prvi parcijalni",termin:datum}}).then(async ispiti=>{
+            db.ispit.findAll({where:{idPredmet:p.id,tipIspita:"Prvi parcijalni",termin:datum}}).then(async ispiti=>{
               let nizIspitId = [];  for(let i=0;i<ispiti.length;i++) nizIspitId.push(ispiti[i].id);
-              db.ispiti_rezultati.findAll({where:{idIspit:{[op.in]:nizIspitId}}}).then(async rezultati_ispita=>{
+              db.ispiti_rezultati.findAll({where:{idIspit:{[Op.in]:nizIspitId}}}).then(async rezultati_ispita=>{
                 // rezultati_ispita imaju podatke o studentima koji su položili kao i njihove bodove
                 db.predmetStudent.findAll({where:{idPredmet:id_predmeta}}).then(async sviStudentiNaPredmetu=>{
                   //unutar sviKojiSuIzasli postoji ID-evi studenta, kao i akademska godina, ocjena i datum upisa ocjene za pojedini predmet.
@@ -216,9 +213,9 @@ app.get("/Izvjestaji/dajPredmetPoGodini/:predmetId/:godinaId:/:filter/:datum",fu
             });
           break;
           case "Drugi parcijalni":
-            db.ispit.findAll({where:{idPredmet:p.idPredmet,tipIspita:"Drugi parcijalni",termin:datum}}).then(async ispiti=>{
+            db.ispit.findAll({where:{idPredmet:p.id,tipIspita:"Drugi parcijalni",termin:datum}}).then(async ispiti=>{
               let nizIspitId = [];  for(let i=0;i<ispiti.length;i++) nizIspitId.push(ispiti[i].id);
-              db.ispiti_rezultati.findAll({where:{idIspit:{[op.in]:nizIspitId}}}).then(async rezultati_ispita=>{
+              db.ispiti_rezultati.findAll({where:{idIspit:{[Op.in]:nizIspitId}}}).then(async rezultati_ispita=>{
                 // rezultati_ispita imaju podatke o studentima koji su položili kao i njihove bodove
                 db.predmetStudent.findAll({where:{idPredmet:id_predmeta}}).then(async sviStudentiNaPredmetu=>{
                   //unutar sviKojiSuIzasli postoji ID-evi studenta, kao i akademska godina, ocjena i datum upisa ocjene za pojedini predmet.
@@ -243,9 +240,9 @@ app.get("/Izvjestaji/dajPredmetPoGodini/:predmetId/:godinaId:/:filter/:datum",fu
             });  
           break;
           case "Usmeni":
-              db.ispit.findAll({where:{idPredmet:p.idPredmet,tipIspita:"Usmeni",termin:datum}}).then(async ispiti=>{
+              db.ispit.findAll({where:{idPredmet:p.id,tipIspita:"Usmeni",termin:datum}}).then(async ispiti=>{
                 let nizIspitId = [];  for(let i=0;i<ispiti.length;i++) nizIspitId.push(ispiti[i].id);
-                db.ispiti_rezultati.findAll({where:{idIspit:{[op.in]:nizIspitId}}}).then(async rezultati_ispita=>{
+                db.ispiti_rezultati.findAll({where:{idIspit:{[Op.in]:nizIspitId}}}).then(async rezultati_ispita=>{
                   // rezultati_ispita imaju podatke o studentima koji su položili kao i njihove bodove
                   db.predmetStudent.findAll({where:{idPredmet:id_predmeta}}).then(async sviStudentiNaPredmetu=>{
                     //unutar sviKojiSuIzasli postoji ID-evi studenta, kao i akademska godina, ocjena i datum upisa ocjene za pojedini predmet.
@@ -270,20 +267,22 @@ app.get("/Izvjestaji/dajPredmetPoGodini/:predmetId/:godinaId:/:filter/:datum",fu
               });  
           break;
           case "Prisustvo":
-              db.prisustvoPredavanja.findAll({where:{idPredmeta:p.idPredmet}}).then(async predavanja=>{
-                db.prisustvoTutorijali.findAll({where:{idPredmeta:p.idPredmet}}).then(async tutorijali=>{
-                  db.prisustvoVjezbe.findAll({where:{idPredmet:p.idPredmet}}).then(async vjezbe=>{
-                    let odgovor = predavanja.concat(tutorijali.conca(vjezbe));
+              db.prisustvoPredavanja.findAll({where:{idPredmeta:p.id}}).then(async predavanja=>{
+                db.prisustvoTutorijali.findAll({where:{idPredmeta:p.id}}).then(async tutorijali=>{
+                  db.prisustvoVjezbe.findAll({where:{idPredmeta:p.id}}).then(async vjezbe=>{
+                    let odgovor = predavanja.concat(tutorijali.concat(vjezbe));
                     res.send(odgovor); res.end();
                   });
                 });
               });
           break;
           case "Zadaca":
-              db.zadaca.findAll({where:{idPredmet:p.idPredmet}}).then(async zadace=>{
+              db.zadaca.findAll({where:{idPredmet:p.id}}).then(async zadace=>{
                 let id_zadaca = []; for(let i=0;i<zadace.length;i++) id_zadaca.push(zadace[i].idZadaca);
+
                 db.zadatak.findAll({where:{idZadaca:{[Op.in]:id_zadaca}}}).then(async zadaci=>{
                 let id_zadataka=[]; for(let i=0;i<zadaci.length;i++) id_zadataka.push(zadaci[i].idZadatak);
+
                   db.student_zadatak.findAll({where:{idZadatak:{[Op.in]:id_zadataka}}}).then(async dobijeni_bodovi=>{
                     let odgovor = [];
                     for(let i=0;i<dobijeni_bodovi.length;i++)
@@ -294,35 +293,106 @@ app.get("/Izvjestaji/dajPredmetPoGodini/:predmetId/:godinaId:/:filter/:datum",fu
               });
           break;
           case "Bodovi":
-              db.ispit.findAll({where:{idPredmet:p.idPredmet,tipIspita:"Prvi parcijalni"}}).then(async prveParcijale=>{
+              db.ispit.findAll({where:{idPredmet:p.id,tipIspita:"Prvi parcijalni"}}).then(async prveParcijale=>{
               let nizIspitIdPrveParcijale = [];  for(let i=0;i<prveParcijale.length;i++) nizIspitIdPrveParcijale.push(prveParcijale[i].id);
-              db.ispiti_rezultati.findAll({where:{idIspit:{[op.in]:nizIspitId}}}).then(async rezultati_ispitaPrveParcijale=>{
+              db.ispiti_rezultati.findAll({where:{idIspit:{[Op.in]:nizIspitIdPrveParcijale}}}).then(async rezultati_ispitaPrveParcijale=>{
                 // rezultati_ispita imaju podatke o studentima koji su položili kao i njihove bodove
                 db.predmetStudent.findAll({where:{idPredmet:id_predmeta}}).then(async sviStudentiNaPredmetu=>{
                   //unutar sviKojiSuIzasli postoji ID-evi studenta, kao i akademska godina, ocjena i datum upisa ocjene za pojedini predmet.
                     let id_studenata = []; for(let i=0;i<sviStudentiNaPredmetu.length;i++) id_studenata.push(sviStudentiNaPredmetu[i].idStudent)
-              db.ispit.findAll({where:{idPredmet:p.idPredmet,tipIspita:"Drugi parcijalni"}}.then(async drugeParcijale=>{
+              db.ispit.findAll({where:{idPredmet:p.id,tipIspita:"Drugi parcijalni"}}).then(async drugeParcijale=>{
                 let nizIspitIdDrugeParcijale=[]; for(let i=0;i<drugeParcijale.length;i++)nizIspitIdDrugeParcijale.push(drugeParcijale[i].id)
 
                   db.ispiti_rezultati.findAll({where:{idIspit:{[Op.in]:nizIspitIdDrugeParcijale}}}).then(async rezultati_ispitaDrugeParcijale=>{
-              db.ispit.findAll({where:{idPredmet:p.idPredmet,tipIspita:"Usmeni"}}).then(async zavrsni=>{
+              db.ispit.findAll({where:{idPredmet:p.id,tipIspita:"Usmeni"}}).then(async zavrsni=>{
                 let nizIspitIdZavrsni=[]; for(let i=0;i<zavrsni.length;i++) nizIspitIdZavrsni.push(zavrsni[i].id);
                 db.ispiti_rezultati.findAll({where:{idIspit:{[Op.in]:nizIspitIdZavrsni}}}).then(async rezultati_ispitaUsmeni=>{
-                  ///////dovde se imaju svi ispiti
+                   
+                  db.zadaca.findAll({where:{idPredmet:p.id}}).then(async sveZadace=>{
+                      let id_zadaca = []; for(let i=0;i<sveZadace.length;i++) id_zadaca.push(sveZadace[i].idZadaca);
+                      db.zadatak.findAll({where:{idZadaca:{[Op.in]:id_zadaca}}}).then(async sviZadaci=>{
+                        let id_zadataka = []; for(let i=0;i<sviZadaci.length;i++) id_zadataka.push(sviZadaci[i].idZadatak);
+                        
+                        db.student_zadatak.findAll({where:{idZadatak:{[Op.in]:id_zadataka}}}).then(async ostvareniBodoviZadaca => {
+                          let odgovor = [];
+                          let hepek = 0;
+                          db.prisustvoPredavanja.findAll({where:{idPredmeta:p.id}}).then(async predavanja=>{
+                            db.prisustvoTutorijali.findAll({where:{idPredmeta:p.id}}).then(async tutorijali=>{
+                              db.prisustvoVjezbe.findAll({where:{idPredmeta:p.id}}).then(async vjezbe=>{
+                                let odgovor = predavanja.concat(tutorijali.concat(vjezbe));
+                                let vrati = [];
+                                  for(let i=0;i<odgovor.length;i++){
+                                    hepek=ostvareniBodoviZadaca[i].brojOstvarenihBodova+rezultati_ispitaPrveParcijale[i].bodovi+
+                                    rezultati_ispitaDrugeParcijale[i].bodovi+rezultati_ispitaUsmeni[i].bodovi+
+                                    predavanja[i].prisutan && tutorijali[i].prisutan && vjezbe[i].prisutan ? 10 : 0;
+                                    vrati.push(hepek);
+                                  }
+                                res.send(vrati);res.end();
+                              });
+                            });
+                          });
+                        });
+
+                      });
+                   
+                    });
+
                 });
               });
 
                   });
-                }));    
+                });    
                 });
               });
             });
           break;
           case "Ocjena":
-
+              db.predmetStudent.findAll({where:{idPredmet:p.id,idAkademskaGodina:id_godine}}).then(async ocjene=>{
+                let odg = []; for(let i=0;i<ocjene.length;i++) odg.push(ocjene[i].ocjena);
+                res.send(odg); res.end();
+              });
           break;
-          case null:
+          case "null":
+            try{
+              var nazivPredmeta =   p.naziv;
+              var nazivGodine = g.naziv;
+            }catch{
+              res.json({message:"Nepostojeći predmet"});
+            }
+              let nizStavki= [
+                {tip:"Prisustvo"}, 
+                {tip:"Zadaca"}, 
+                {tip:"Bodovi"}, 
+                {tip:"Ocjena"}
+            ]
+            try{
+            db.ispit.findAll({where:{idPredmet:p.id,tipIspita:"Prvi parcijalni",termin:{[Op.or]:{[Op.between]:[g.pocetak_zimskog_semestra,g.kraj_zimskog_semestra],[Op.between]:[g.pocetak_ljetnog_semestra,g.kraj_ljetnog_semestra]}}}}).
+            then(async prveParcijale=>{ 
+              let kepec;
+              db.ispit.findAll({where:{idPredmet:p.id,tipIspita:"Drugi parcijalni",termin:{[Op.or]:{[Op.between]:[g.pocetak_zimskog_semestra,g.kraj_zimskog_semestra],[Op.between]:[g.pocetak_ljetnog_semestra,g.kraj_ljetnog_semestra]}}}}).
+            then(async drugeParcijale=>{
+              let kepec;
+              db.ispit.findAll({where:{idPredmet:p.id,tipIspita:"Usmeni",termin:{[Op.or]:{[Op.between]:[g.pocetak_zimskog_semestra,g.kraj_zimskog_semestra],[Op.between]:[g.pocetak_ljetnog_semestra,g.kraj_ljetnog_semestra]}}}}).
+            then(async usmeniIspiti=>{
+              let kepec;
+              for(let i=0;i<prveParcijale.length;i++) nizStavki.push({tip:"Prvi parcijalni",datum:prveParcijale[i].termin});
+              for(let i=0;i<drugeParcijale.length;i++) nizStavki.push({tip:"Drugi parcijalni",datum:drugeParcijale[i].termin});
+              for(let i=0;i<usmeniIspiti.length;i++) nizStavki.push({tip:"Usmeni",datum:usmeniIspiti[i].termin});
+              res.json({
+                nazivPredmeta:nazivPredmeta,
+                nazivGodine:nazivGodine,
+                nizStavki:nizStavki
+              });
+            });
+            
+            });
 
+
+            });
+          }catch{
+            res.json({message:"Greška na serveru"});
+          }
+          
           break;
         default:
           res.json({message:"Greška na serveru"});
@@ -569,10 +639,7 @@ app.get("/izvjestaj/:index/:predmet/bodovi", async function(req, res) {
 });
 
 //I_US_26
-app.get("/izvjestaj/:index/:predmet/bodoviPrveParcijale", async function(
-  req,
-  res
-) {
+app.get("/izvjestaj/:index/:predmet/bodoviPrveParcijale", async function(req,res) {
   let odgovor = { bodovi: [], informacije: [] };
   let ind = req.params.index;
   let pred = req.params.predmet;
@@ -708,10 +775,7 @@ app.get("/dajAktuelnuAkademskuGodinu", async function(req, res) {
 });
 
 //I_US_47
-app.get("/izvjestaj/:index/:akademska/polozeniPredmeti", async function(
-  req,
-  res
-) {
+app.get("/izvjestaj/:index/:akademska/polozeniPredmeti", async function(req,res) {
   let odgovor = { predmeti: [] };
   let ind = req.params.index;
   let aktuelnaAkademska = req.params.akademska; //id akademske
@@ -798,10 +862,7 @@ app.get('/dajIzlaznostNaIspit/:predmet/:tipIspita', function(req, res) {
 });
 
 //I_US_56
-app.get("/izvjestaj/:predmet/:akademska/prvaParcijalaPredmeta", async function(
-  req,
-  res
-) {
+app.get("/izvjestaj/:predmet/:akademska/prvaParcijalaPredmeta", async function(req,res) {
   let odgovor = { studenti: [] };
   let pred = req.params.predmet; //predmet
   let aktuelnaAkademska = req.params.akademska; //id akademske
