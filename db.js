@@ -33,6 +33,7 @@ db.zadaca = sequelize.import(__dirname + "/zadaca.js");
 db.akademskaGodina = sequelize.import(__dirname + "/akademskaGodina.js");
 db.student_zadatak = sequelize.import(__dirname+"/student_zadatak.js");
 db.zadatak = sequelize.import(__dirname+"/zadatak.js");
+db.sacuvaniIzvjestaji = sequelize.import(__dirname + "/sacuvaniIzvjestaji.js");
 
 //definisanje veza
 //1:n

@@ -2,6 +2,7 @@ const express = require("express");
 var cors = require("cors");
 var bodyParser = require("body-parser");
 const Sequelize = require("sequelize");
+const url = require('url');
 const db = require(__dirname + "/db.js");
 const Op = Sequelize.Op;
 
@@ -1039,6 +1040,47 @@ app.get(
   }
 );
 
+// Dodavanje precice
+app.post("/izvjestaji/dodajPrecicu", function(req, res){
+  var precica = req.body;
+  db.sacuvaniIzvjestaji.findOne({ where:{studentId: precica['studentId'], predmetId:precica['predmetId'], godinaId:precica['godinaId']}}).then((izvjestaj)=>{
+    if(izvjestaj!=null)
+      return true;
+    else{
+      db.sacuvaniIzvjestaji.create({studentId: precica['studentId'], predmetId:precica['predmetId'], godinaId:precica['godinaId'], naziv:precica['naziv']})
+      return false;
+    }
+  }).then(postoji=>{
+    if (postoji=== true)
+      res.json({message:"Taj izvjestaj je vec sacuvan."});
+    else
+      res.json({message:"ok"});
+    
+  }
+    
+ )
+
+});
+// Brisanje precice
+app.post("/izvjestaji/obrisiPrecicu", function(req, res){
+  var precica = req.body;
+  db.sacuvaniIzvjestaji.findOne({where:{studentId: precica['studentId'], predmetId:precica['predmetId'], godinaId:precica['godinaId']}}).then((izvjestaj)=>{
+    if(izvjestaj===null)
+      res.json({message:"Ne postoji precica"});
+    else{
+      db.sacuvaniIzvjestaji.destroy({where:{studentId: precica['studentId'], predmetId:precica['predmetId'], godinaId:precica['godinaId'], naziv:precica['naziv']}}).then(()=>res.json({message:"ok"}));
+        
+    }
+  })
+});
+// Pregled svih precica studenta
+app.get("/izvjestaji/precice", function(req, res){
+  var sId= url.parse(req.url, true).query['studentId'];
+  db.sacuvaniIzvjestaji.findAll({attributes:['naziv', 'godinaId', 'predmetId'],where:{studentId: sId}}).then(rez=>{
+    res.json(rez);
+  })
+
+});
 app.listen(31912, () => {
   console.log("Server started, listening at port 31912");
 });
