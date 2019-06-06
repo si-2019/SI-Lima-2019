@@ -494,7 +494,7 @@ app.get("/Izvjestaji/dajPolozeneIspite/:index", function(req, res) {
   });
 });
 
-// I_US_25, I_US_26, I_US_56
+// I_US_25, I_US_26, I_US_56, I_US_60
 app.get("/dajPredmete", async function(req, res) {
   let odgovor = { predmeti: [] };
   db.predmet.findAll().then(async rez => {
@@ -796,7 +796,7 @@ app.get('/dajBodoveProjekata/:index/:predmet', function(req, res) {
   });
 });
 
-//I_US_47, I_US_56
+//I_US_47, I_US_56, I_US_60
 app.get("/dajAktuelnuAkademskuGodinu", async function(req, res) {
   let odgovor;
   db.akademskaGodina.findOne({ where: { aktuelna: "1" } }).then(async rez => {
@@ -993,6 +993,51 @@ app.get("/izvjestaj/:predmet/:akademska/prvaParcijalaPredmeta", async function(r
     }
   }
 });
+//I_US_60
+app.get(
+  "/izvjestaj/:predmet/:akademska/brojPolozenihStudenataPredmeta",
+  async function(req, res) {
+    let odgovor = { studenti: [] };
+    let pred = req.params.predmet; //predmet
+    let aktuelnaAkademska = req.params.akademska; //id akademske
+
+    let objekat = {
+      predmetNaGodini: true,
+      id: null,
+      brojPolozenih: null,
+      ukupanBrStuPred: null
+    };
+    //nadji odabrani predmet id=8
+    let izabraniPredmet = await db.predmet.findOne({
+      where: { naziv: pred }
+    });
+    //nadji sve studente na predmetu id=3 duzina 1
+    let idstudentPredmet = await db.predmetStudent.findAll({
+      where: {
+        idPredmet: izabraniPredmet.id,
+        idAkademskaGodina: aktuelnaAkademska
+      }
+    });
+    //ako nema studenata na osnovu uslova, predmet nije na godini
+    if (idstudentPredmet.length === 0) {
+      objekat.predmetNaGodini = false;
+      odgovor.studenti.push(objekat);
+      res.json(odgovor);
+    }
+    //ako je predmet na godini nadji one koji su polozili
+    else {
+      objekat.ukupanBrStuPred = idstudentPredmet.length;
+      objekat.id=izabraniPredmet.id;
+      let brojac = 0;
+      for (let i = 0; i < idstudentPredmet.length; i++) {
+        if (idstudentPredmet[i].ocjena != null) brojac++;
+      }
+      objekat.brojPolozenih = brojac;
+      odgovor.studenti.push(objekat);
+      res.json(odgovor);
+    }
+  }
+);
 
 app.listen(31912, () => {
   console.log("Server started, listening at port 31912");
