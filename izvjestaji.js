@@ -1081,6 +1081,35 @@ app.get("/izvjestaji/precice", function(req, res){
   })
 
 });
+// svi predmeti
+app.get("/predmeti", function(req, res){
+  db.predmet.findAll({attributes:['id', 'naziv']}).then(predmeti=>res.json(predmeti))
+});
+//polozeni i nepolozeni predmeti studenta
+app.get("/predmeti_studenta", function(req,res){
+  var sId= url.parse(req.url, true).query['studentId'];
+  var polozeni_p=[];
+  db.predmetStudent.findAll({ where:{IdStudent:sId, ocjena: { [Sequelize.Op.not]: null }}}).then(polozeni=>{
+    var promisi= [];
+    for ( var i =0; i< polozeni.length; i++){
+      promisi.push(
+      db.predmet.findOne({attributes:['id','naziv'], where: {id:polozeni[i].idPredmet}}).then(p=>polozeni_p.push(p))
+      );
+    }
+    Promise.all(promisi).then(()=>{
+      var nepolozeni_p=[];
+      db.predmetStudent.findAll({ where:{IdStudent:sId, ocjena: null }}).then(nepolozeni=>{
+       var promisi2=[];
+        for ( var i =0; i< nepolozeni.length; i++){
+          promisi2.push(
+            db.predmet.findOne({attributes:['id','naziv'], where: {id:nepolozeni[i].idPredmet}}).then(p=>nepolozeni_p.push(p))
+            );
+        }
+        Promise.all(promisi2).then(()=>{res.json({polozeni:polozeni_p, nepolozeni:nepolozeni_p})});
+      })
+    });
+  })
+})
 app.listen(31912, () => {
   console.log("Server started, listening at port 31912");
 });
