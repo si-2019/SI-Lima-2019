@@ -1155,9 +1155,6 @@ app.get("/predmeti_studenta", function(req,res){
       })
     });
   })
-})
-app.listen(31912, () => {
-  console.log("Server started, listening at port 31912");
 });
 
 app.listen(PORT,function(){
