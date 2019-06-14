@@ -178,6 +178,50 @@ app.get("/Izvjestaji/dajDrugeParcijale/:index/:predmet", async function(req,res)
   });
 });
 
+app.get("/Izvjestaji/dajZavrsne/:index/:predmet", async function(req,res) {
+ 
+  let _indeks = req.params.index;
+  let predmet = req.params.predmet;
+
+  let rezultati = [];
+  db.korisnik.findOne({ where: { indeks: _indeks } }).then(async stu => {
+    db.predmet.findOne({ where: { naziv: predmet } }).then(async pred => {
+      if (pred == null || pred == undefined)
+        res.json({ message: "404, nepostojeći predmet" });
+      else {
+        db.ispit
+          .findAll({
+            where: { idPredmet: pred.id, tipIspita: "Zavrsni" }
+          })
+          .then(async ispiti => {
+            let ispiti_id = [];
+            for (let i = 0; i < ispiti.length; i++)
+              ispiti_id.push(ispiti[i].idIspit);
+            db.ispiti_rezultati
+              .findAll({
+                where: {
+                  idIspit: { [Op.in]: ispiti_id },
+                  idStudent: stu.id
+                }
+              })
+              .then(konacno => {
+                let odg = [];
+                for (let i = 0; i < konacno.length; i++)
+                  odg.push({
+                    indeks: _indeks,
+                    ime: stu.ime,
+                    prezime: stu.prezime,
+                    datumIspita: ispiti[i].termin,
+                    brojBodova: konacno[i].bodovi
+                  });
+                res.json(odg);
+              });
+          });
+      }
+    });
+  });
+});
+
 app.get("/Izvjestaji/dajPredmetPoGodini/:predmetId/:godinaId/:filter/:datum",function(req,res){
   let id_predmeta = req.params.predmetId;
   let id_godine = req.params.godinaId;
