@@ -5,11 +5,45 @@ const Sequelize = require("sequelize");
 const db = require(__dirname + "/db.js");
 const Op = Sequelize.Op;
 
-db.sequelize.sync().then(function() {});
 const app = express();
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+const PORT = process.env.PORT || 31912;
+
+db.sequelize
+  .sync({ force: false }) // NE MIJENJAJ NA TRUE NIKAD
+  .then(() => {
+    //force:true je da se nas dio baze uvijek iznova kreira
+    console.log("Konektovan na bazu!");
+  })
+  .catch(e => {
+    console.log("Greska");
+    console.log(e);
+  });
+
+app.post("/slanjeZahtjevaZaPotvrdu", upload.any(), function(req, res) {
+  var bodyReq = JSON.parse(req.body.state);
+
+  var obradjenZahtjev = false;
+  var datumObradeZahtjeva = null;
+  var besplatnaPotvrda = true;
+  var datumSlanjaZahtjeva = Date.now();
+
+  db.zahtjevZaPotvrdu.findOrCreate({
+    where: {
+      idStudenta: bodyReq.idStudenta,
+      idSvrhe: bodyReq.idSvrhe,
+      idAkademskeGodine: bodyReq.idAkademskeGodine,
+      obradjen: obradjenZahtjev,
+      datumZahtjeva: datumSlanjaZahtjeva,
+      datumObrade: datumObradeZahtjeva,
+      besplatna: besplatnaPotvrda
+    }
+  }).catch(err => res.send(err));
+});
+
 app.get("/dajSveZahtjeve", async function(req, res) {
   let odgovor = { zahtjevi: [] };
   db.zahtjevZaPotvrdu.findAll().then(async rez => {
@@ -102,4 +136,5 @@ app.post("/obrada", async function(req, res) {
     res.end();
  
 });
-app.listen(8080);
+app.listen(PORT,function(){ console.log('server successfully started on port '+PORT); });
+// app.listen(8080);
