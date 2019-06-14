@@ -1,0 +1,29 @@
+{
+  "name": "si-lima-2019",
+  "version": "1.0.0",
+  "description": "Ovdje se nalazi glavni backend za izvještaje (izvjestaji.js).",
+  "main": "index.js",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.16.4",
+    "mysql2": "^1.6.5",
+    "swagger-jsdoc": "^3.2.9",
+    "url": "^0.11.0",
+    "swagger-ui-express": "^4.0.2",
+    "sequelize": "^5.3.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/si-2019/SI-Lima-2019.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/si-2019/SI-Lima-2019/issues"
+  },
+  "homepage": "https://github.com/si-2019/SI-Lima-2019#readme"
+}
