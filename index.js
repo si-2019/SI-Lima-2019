@@ -6,6 +6,7 @@ const url = require('url');
 const db = require(__dirname + "/db.js");
 const Op = Sequelize.Op;
 
+
 db.sequelize.sync().then(function() {});
 const app = express();
 app.use(cors());
@@ -159,11 +160,18 @@ app.get("/Izvjestaji/dajPredmetPoGodini/:predmetId/:godinaId/:filter/:datum",fun
                                 let odgovor = predavanja.concat(tutorijali.concat(vjezbe));
                                 let vrati = [];
                                   for(let i=0;i<odgovor.length;i++){
-                                    hepek=ostvareniBodoviZadaca[i].brojOstvarenihBodova+rezultati_ispitaPrveParcijale[i].bodovi+
-                                    rezultati_ispitaDrugeParcijale[i].bodovi+rezultati_ispitaUsmeni[i].bodovi+
-                                    predavanja[i].prisutan && tutorijali[i].prisutan && vjezbe[i].prisutan ? 10 : 0;
+                                    hepek=predavanja[i].prisutan && tutorijali[i].prisutan && vjezbe[i].prisutan ? 10 : 0;
                                     vrati.push(hepek);
                                   }
+                                  for(let i=0;i<rezultati_ispitaPrveParcijale.length;i++)
+                                    vrati[i]+=rezultati_ispitaPrveParcijale[i].bodovi;
+                                  for(let i=0;i<rezultati_ispitaDrugeParcijale.length;i++)
+                                    vrati[i]+=rezultati_ispitaDrugeParcijale[i].bodovi;
+                                  for(let i=0;i<rezultati_ispitaUsmeni.length;i++)
+                                    vrati[i]+=rezultati_ispitaUsmeni[i].bodovi;
+                                  for(let i=0;i<ostvareniBodoviZadaca.length;i++)
+                                    vrati[i]+=ostvareniBodoviZadaca[i].bodovi;
+                                  
                                 res.send(vrati);res.end();
                               });
                             });
@@ -227,7 +235,7 @@ app.get("/Izvjestaji/dajPredmetPoGodini/:predmetId/:godinaId/:filter/:datum",fun
 
             });
           }catch{
-            res.json({message:"Greška na serveru"});
+            //res.json({message:"Greška na serveru"});
           }
           
           break;
@@ -298,11 +306,8 @@ app.post("/izvjestaji/dodajPrecicu", function(req, res){
       res.json({message:"Taj izvjestaj je vec sacuvan."});
     else
       res.json({message:"ok"});
-    
   }
-    
  )
-
 });
 // Brisanje precice
 app.post("/izvjestaji/obrisiPrecicu", function(req, res){
@@ -332,7 +337,8 @@ app.get("/predmeti", function(req, res){
 app.get("/predmeti_studenta", function(req,res){
   var sId= url.parse(req.url, true).query['studentId'];
   var polozeni_p=[];
-  db.predmetStudent.findAll({ where:{IdStudent:sId, ocjena: { [Sequelize.Op.not]: null }}}).then(polozeni=>{
+  if(sId !== undefined)
+  db.predmetStudent.findAll({ where:{idStudent:sId, ocjena: { [Sequelize.Op.not]: null }}}).then(polozeni=>{
     var promisi= [];
     for ( var i =0; i< polozeni.length; i++){
       promisi.push(
@@ -352,6 +358,8 @@ app.get("/predmeti_studenta", function(req,res){
       })
     });
   })
+else
+res.json({message:"Nemate dozvolu pristupa"});
 });
 
 app.listen(31912, () => {
