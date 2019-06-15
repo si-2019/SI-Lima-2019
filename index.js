@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 require('./stari_zahtjevi.js')(app)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-app.get("/Izvjestaji/dajPredmetPoGodini/:predmetId/:godinaId/:filter/:datum",function(req,res){
+app.get("/Izvjestaji/dataPredmetPoGodini/:predmetId/:godinaId/:filter/:datum",function(req,res){
   let id_predmeta = req.params.predmetId;
   let id_godine = req.params.godinaId;
   let filter = req.params.filter;
@@ -453,6 +453,72 @@ app.get('/getPredmetiProfesora',function(req,res){
     }
   });
 });
+//profesorovv dataPredmetPoGodini
+app.get('/dataPredmetPoGodini',function(req,res){
+  let idProfesora = req.query["profesorId"];
+  let idPredmeta = req.query["predmetId"];
+  let godinaId = req.query["godinaId"];
+  let odg={nazivGodine:"",nazivPredmeta:"",data:[]};
+  db.korisnik.findOne({where:{id:idProfesora}}).then(profa=>{
+    var a ={imeStudenta:"",prezimeStudenta:"",indeks:"",stavkeOcjenjivanja:[]}
+    if(profa === null ||profa === undefined) 
+      res.json({message:"Nepostojeći korisnik!"});
+    else{
+      db.predmet.findAll({where:{idProfesor:idProfesora}}).then(sviProfesoroviPredmeti=>{
+        let idPredmeta = [];
+        sviProfesoroviPredmeti.forEach(element => {
+          idPredmeta.push(element.id);
+        });
+        db.predmetStudent.findAll({where:{idPredmet:{[Op.in]:idPredmeta}}}).then(sviStudentiNaPredmetu=>{
+          let idStudenta=[];
+          sviStudentiNaPredmetu.forEach(element => {
+            idStudenta.push(element.idStudent);
+          });
+          db.korisnik.findAll({where:{id:{[Op.in]:idStudenta}}}).then(studenti=>{
+            db.akademskaGodina.findOne({where:{aktuelna:true}}).then(trenutnaAkGod=>{
+              db.ispit.findAll({where:{idProfesor:idProfesora}}).then(sviProfesoroviIspiti=>{
+                let idIspita = [];
+                sviProfesoroviIspiti.forEach(element => {
+                    idIspita.push(element.idIspit)
+                });
+              sviStudentiNaPredmetu.forEach(element => {
+                
+                a.imeStudenta = element.ime;
+                a.prezimeStudenta=element.prezime;
+                a.indeks = element.indeks;
+                let so = [];
+                
+                  db.ispitBodovi.findAll({where:{idIspita:{[Op.in]:idIspita}}}).then(rezultatiSvihIspita=>{
+                    for(let i=0;i<sviStudentiNaPredmetu.length;i++){
+                      let id = sviStudentiNaPredmetu[i].id;
+                      let stavka = {naziv:"",brojBodova:""};
+                      for(let j=0;j<rezultatiSvihIspita;j++){
+                        if(rezultatiSvihIspita[j].idKorisnika == sviStudentiNaPredmetu[i].id){
+                          sviProfesoroviIspiti.forEach(element => {
+                            if(element.idIspit == rezultatiSvihIspita[j].idIspita){
+                              stavka.naziv = element.naziv;
+                              stavka.brojBodova = rezultatiSvihIspita[j].bodovi;
+                            so.push(stavka);
+                            }
+                          });
+                        }
+
+                      }
+                      a.stavkeOcjenjivanja = so;
+                    }
+                   
+                  });
+                });
+                res.json(a);
+              });
+            });
+          });
+        });
+      });
+    }
+  })
+});
+
 app.listen(31912, () => {
   console.log("Server started, listening at port 31912");
 });
