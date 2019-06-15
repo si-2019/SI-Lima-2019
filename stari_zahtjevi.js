@@ -1,3 +1,17 @@
+const express = require("express");
+var cors = require("cors");
+var bodyParser = require("body-parser");
+const Sequelize = require("sequelize");
+const url = require('url');
+const db = require(__dirname + "/db.js");
+const Op = Sequelize.Op;
+
+
+db.sequelize.sync().then(function() {});
+const app = express();
+app.use(cors());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 module.exports = function(app){
 app.get("/dajSveZahtjeve", async function(req, res) {
     let odgovor = { zahtjevi: [] };
