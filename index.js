@@ -6,7 +6,7 @@ const url = require('url');
 const db = require(__dirname + "/db.js");
 const Op = Sequelize.Op;
 
-
+var PORT=process.env.PORT||31912;
 db.sequelize.sync().then(function() {});
 const app = express();
 app.use(cors());
@@ -636,6 +636,6 @@ app.post('/kreirajPotvrdu', function(req,res){
   }) 
   })
 });
-app.listen(31912, () => {
+app.listen(PORT, () => {
   console.log("Server started, listening at port 31912");
 });
