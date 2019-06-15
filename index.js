@@ -207,7 +207,7 @@ app.get("/Izvjestaji/dataPredmetPoGodini/:predmetId/:godinaId/:filter/:datum",fu
               db.ispit.findAll({where:{idPredmet:p.id,tipIspita:"Drugi parcijalni",termin:{[Op.or]:{[Op.between]:[g.pocetak_zimskog_semestra,g.kraj_zimskog_semestra],[Op.between]:[g.pocetak_ljetnog_semestra,g.kraj_ljetnog_semestra]}}}}).
             then(async drugeParcijale=>{
               let kepec;
-              db.ispit.findAll({where:{idPredmet:p.id,tipIspita:"Usmeni"/*,termin:{[Op.or]:{[Op.between]:[g.pocetak_zimskog_semestra,g.kraj_zimskog_semestra],[Op.between]:[g.pocetak_ljetnog_semestra,g.kraj_ljetnog_semestra]}}*/}}).
+              db.ispit.findAll({where:{idPredmet:p.id,tipIspita:"Usmeni",termin:{[Op.or]:{[Op.between]:[g.pocetak_zimskog_semestra,g.kraj_zimskog_semestra],[Op.between]:[g.pocetak_ljetnog_semestra,g.kraj_ljetnog_semestra]}}}}).
             then(async usmeniIspiti=>{
               let kepec;
               for(let i=0;i<prveParcijale.length;i++) nizStavki.push({tip:"Prvi parcijalni",datum:prveParcijale[i].termin});
