@@ -1,4 +1,27 @@
-const createCsvWriter = require('csv-writer').createObjectCsvWriter;  
+const createCsvWriter = require('csv-writer').createObjectCsvWriter; 
+const express = require("express");
+var cors = require("cors");
+var bodyParser = require("body-parser");
+const Sequelize = require("sequelize");
+const db = require(__dirname + "/db.js");
+const Op = Sequelize.Op;
+const app = express();
+app.use(cors());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
+const PORT = process.env.PORT || 31912;
+
+db.sequelize
+  .sync({ force: false }) 
+  .then(() => {
+    console.log("Konektovan na bazu!");
+  })
+  .catch(e => {
+    console.log("Greska");
+    console.log(e);
+});
+
 app.get('/dajBodoveProjekatacsv/:index/:predmet', function(req, res) {
 const csvWriter = createCsvWriter({  
   path: 'us28csv.csv',
@@ -42,5 +65,9 @@ const csvWriter = createCsvWriter({
 		.then(()=> console.log('CSV fajl uspjesno kreiran'));
       });
     });
+  });
+});
+app.listen(PORT,function(){ console.log('server successfully started on port '+PORT); });
+// app.listen(8080);
   });
 });
