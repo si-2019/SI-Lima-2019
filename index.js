@@ -22,51 +22,111 @@ db.sequelize
     console.log(e);
 });
 
-app.get('/dajBodoveProjekatacsv/:index/:predmet', function(req, res) {
+app.get("/izvjestajcsv/:predmet/:akademska/prvaParcijalaPredmeta", async function(req,res) {
 const csvWriter = createCsvWriter({  
-  path: 'us28csv.csv',
-  //Podaci u izvjestaju
+  path: 'us32csv.csv',
   header: [
+    {id: 'predmetNaGodini', title: 'PredmetNaGodini'},
+    {id: 'biloIspita', title: 'BiloIspita'},
+    {id: 'id', title: 'ID'},
     {id: 'ime', title: 'Ime'},
-    {id: 'prezime', title: 'Prezime'},
-    {id: 'indeks', title: 'Index'},
-    {id: 'predmet', title: 'Prezime'},
-	{id: 'projekatNaziv',title: 'Projekat naziv'},
-	{id: 'projekatBodovi', title: 'Projekat bodovi'}
+	{id: 'prezime', title: 'Prezime'},
+	{id: 'index',title: 'Index'},
+	{id: 'bodovi', title: 'Bodovi'},
+	{id: 'datum', title: 'Datum'}
   ]
 });
-//Dohvaćanje podataka koje stavljamo u izvještaj
-//user story 28 - Kao student, želim da imam mogućnost za odabir izvještaja o ostvarenom broju bodova na 
-//projektima za pojedini predmet, kako bih dobio željene informacije
-//salje se id studenta i predmeta, vracaju se podaci o ostvarenom broju bodova na projektima za taj predmet i tog studenta
 
-  var indeksParam = req.params.index;
-  var predmetParam = req.params.predmet; 
-  db.korisnik.findOne({where : {indeks: indeksParam}}).then(function(student) {
-    db.predmet.findOne({where : {naziv : predmetParam}}).then(function(predmet) {
-      db.projekat.findAll({where : {idKorisnik: student.id, idPredmet: predmet.id}}).then(function(projekti) {
-        var odgovor = [];
-        //buduci da baza nije dobro dizajnirana, u njoj se ne nalaze podaci o ostvarenom broju bodova na nekom projektu
-        //uradjena je improvizacija pa ce bodovi na projektu biti postotak uradjenog: proizvod 'progress' (u tabeli 'Projekat') i moguceg broja bodova
-        for(var i=0; i<projekti.length; i++) {
-          var bodovi = projekti[i].progress*projekti[i].moguciBodovi;
-          odgovor.push({
-            ime: student.ime,
-            prezime: student.prezime,
-            indeks: student.indeks,
-            predmet: predmet.naziv,
-            projekatNaziv: projekti[i].nazivProjekta,
-            projekatBodovi: bodovi
-          });
+//I_US_56
+
+  let odgovor = { studenti: [] };
+  let pred = req.params.predmet; //predmet
+  let aktuelnaAkademska = req.params.akademska; //id akademske
+
+  let objekat = {
+    predmetNaGodini: true,
+    biloIspita: true,
+    id: null,
+    ime: "/",
+    prezime: "/",
+    index: "/",
+    bodovi: "/",
+    datum: "/"
+  };
+  //nadji odabrani predmet id=8
+  let izabraniPredmet = await db.predmet.findOne({
+    where: { naziv: pred }
+  });
+  //nadji sve studente na predmetu id=3 duzina 1
+  let idstudentPredmet = await db.predmetStudent.findAll({
+    where: {
+      idPredmet: izabraniPredmet.id,
+      idAkademskaGodina: aktuelnaAkademska
+    }
+  });
+  //ako nema studenata na osnovu uslova, predmet nije na godini
+  if (idstudentPredmet.length === 0) {
+    objekat.predmetNaGodini = false;
+    odgovor.studenti.push(objekat);
+    res.json(odgovor);
+  }
+  //ako je predmet na godini nadji prve parcijale
+  else {
+    //nadji prve parcijale predmeta id=1 duzina 1
+    let prveParcijale = await db.ispit.findAll({
+      where: { idPredmet: izabraniPredmet.id, tipIspita: "Prvi parcijalni" }
+    });
+    //nije bilo ispita na predmetu
+    if (prveParcijale.length === 0) {
+      objekat.biloIspita = false;
+      odgovor.studenti.push(objekat);
+      res.json(odgovor);
+    }
+    //bilo prvih parcijala, nadji podatke tih prvih parcijala u ispiti_rezultati
+    else {
+      for (let i = 0; i < prveParcijale.length; i++) {
+        for (let j = 0; j < idstudentPredmet.length; j++) {
+          //nadji rezultate jedne od odrzane prve parcijale
+          await db.ispitBodovi
+            .findOne({
+              where: {
+                idIspita: prveParcijale[i].idIspit,
+                idKorisnika: idstudentPredmet[j].idStudent
+              }
+            })
+            .then(async rez => {
+              //nadji studenta sa id-om
+              let student = await db.korisnik.findOne({
+                where: { id: idstudentPredmet[j].idStudent }
+              });
+              let objekat = {
+                predmetNaGodini: true,
+                biloIspita: true,
+                id: student.id,
+                ime: student.ime,
+                prezime: student.prezime,
+                index: student.indeks,
+                bodovi: "/",
+                datum: prveParcijale[i].termin
+              };
+              //ako je rez null, znaci da student nije izasao na ispit
+              if (rez === null) {
+                odgovor.studenti.push(objekat);
+              } else {
+                //ako je izasao daj bodove
+                objekat.bodovi = rez.bodovi;
+                odgovor.studenti.push(objekat);
+              }
+            });
         }
-        res.json(odgovor);
+      }
+		res.json(odgovor);
 		csvWriter  
 		.writeRecords(odgovor)
-		.then(()=> console.log('CSV fajl uspjesno kreiran'));
+		.then(()=> console.log('CSV fajl je uspjesno kreiran'));
       });
     });
   });
-});
 app.listen(PORT,function(){ console.log('server successfully started on port '+PORT); });
 // app.listen(8080);
   });
