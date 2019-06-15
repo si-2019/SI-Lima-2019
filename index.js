@@ -410,6 +410,25 @@ app.get("/izvjestaj/ispit/:filter/:predmetId/:godinaId/:datum", function(
         });
     });
   });
+  app.get("/predmetiProfesora", function(req,res){
+    var pId= url.parse(req.url, true).query['profesorId'];
+    let odgovor = { 
+      godinaId:0, 
+      nazivGodine:"", 
+      predmeti: [] };
+    db.akademskaGodina.findOne({ where: { aktuelna: "1" } }).then(async rez => {
+      if (rez === null) {
+        odgovor = { Server: "Nema aktuelne godine" };
+        res.json(odgovor);
+      } else {
+        odgovor.godinaId = rez.id;
+        odgovor.nazivGodine = rez.naziv
+      }
+    });
+    db.predmet.findAll({attributes:['id', 'naziv'], where: {idProfesor:pId}}).then(p=>odgovor.predmeti.push(p));
+    res.json(odgovor);
+  });
+
 app.listen(31912, () => {
   console.log("Server started, listening at port 31912");
 });
