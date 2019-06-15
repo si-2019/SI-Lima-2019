@@ -623,6 +623,13 @@ app.get('/izvjestajOSvemu/:predmetId/:godinaId', function(req, res) {
     });
   });
 });
+app.post('/kreirajPotvrdu', function(req,res){
+  var potvrda= req.body;
+  db.zahtjevZaPotvrdu.create({idStudenta:potvrda.idStudenta, idSvrhe: potvrda.idSvrhe, idAkademskeGodine: potvrda.idAkademskeGodine, obradjen: 0, datumZahtjeva: Date.now(), besplatna:1 }).then(rezultat=>
+  {
+    res.json(rezultat);
+  }) 
+});
 app.listen(31912, () => {
   console.log("Server started, listening at port 31912");
 });
