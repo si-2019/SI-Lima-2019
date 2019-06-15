@@ -519,6 +519,110 @@ app.get('/svrhe', function(req, res) {
         res.json(result);
   });
 });
+
+
+app.get('/izvjestajOSvemu/:predmetId/:godinaId', function(req, res) {
+  var predmetid = req.params.predmetId;
+  var godinaid = req.params.godinaId;
+  
+  db.predmetStudent.findAll({where: { idPredmet: predmetid, idAkademskaGodina: godinaid}}).then(function(upisani) {
+
+    db.ispit.findAll({where: {idPredmet : predmetid}}).then(function(ispiti) {
+
+      var listaPromise1 = [];
+      var listaPromise2 = [];
+      var listaPromise3 = [];
+      var listaPromise4 = [];
+      for(var a=0; a<upisani.length; a++) {
+        
+
+        listaPromise2.push(db.prisustvoPredavanja.findAll({where: {idPredmeta: predmetid}}));
+        listaPromise3.push(db.prisustvoTutorijali.findAll({where: {idPredmeta: predmetid}}));
+        listaPromise4.push(db.prisustvoVjezbe.findAll({where: {idPredmeta: predmetid}}));
+
+        for(var b=0; b<ispiti.length; b++) {
+          listaPromise1.push(db.ispitBodovi.findOne({where: {idIspita:ispiti[b].idIspit, idKorisnika:upisani[a].idStudent}}));
+        }
+      }
+
+      var rezultati;
+      var prisustvaPredavanja, prisustvaTutorijali, prisustvaVjezbe;
+      Promise.all(listaPromise1).then(function(_rezultati) {
+        rezultati = _rezultati;
+        return Promise.all(listaPromise2);
+      }).then(function(_prisustvaPredavanja) {
+        prisustvaPredavanja = _prisustvaPredavanja;
+        return Promise.all(listaPromise3);
+      }).then(function(_prisustvaTutorijali) {
+        prisustvaTutorijali = _prisustvaTutorijali;
+        return Promise.all(listaPromise4);
+      }).then(function(_prisustvaVjezbe) {
+
+        prisustvaVjezbe = _prisustvaVjezbe;
+
+        var listaPromise5 = [];
+        for(var d=0; d<upisani.length; d++) {
+          listaPromise5.push(db.korisnik.findAll({where: {id : upisani[d].idStudent}}));
+        }
+
+        return Promise.all(listaPromise5);
+      }).then(function(studenti) {
+        var niz = [];
+
+
+        //res.json(studenti);
+        for(var e=0; e<studenti.length; e++) {
+          niz.push({
+            ime: studenti[e][0].ime,
+            prezime: studenti[e][0].prezime,
+            stavkeOcjenjivanja: []
+          });
+          
+          for(var f=0; f<rezultati.length; f++) {
+            if(rezultati[f] != null && rezultati[f].idStudent == studenti[e].id) {
+              for(var g=0; g<ispiti.length; g++) {
+                if(ispiti[g].id == rezultati[f].idIspita) {
+                  niz[e].stavkeOcjenjivanja.push({
+                    naziv: ispiti[g].tipIspita + " " + ispiti[g].termin,
+                    bodovi: rezultati[f].bodovi
+                  });
+                }
+              }
+            }
+          }
+          var brojacPredavanja=0, brojacTutorijali=0, brojacVjezbe=0;
+          for(var h=0; h<prisustvaPredavanja.length; h++) {
+            if(prisustvaPredavanja[h] != null && studenti[e].id == prisustvaPredavanja[h].idStudenta && prisustvaPredavanja[h].prisutan == false) brojacPredavanja++;
+          }
+          for(var i=0; i<prisustvaTutorijali.length; i++) {
+            if(prisustvaTutorijali[h] != null && studenti[e].id == prisustvaTutorijali[h].idStudenta && prisustvaTutorijali[h].prisutan == false) brojacTutorijali++;
+          }
+          for(var j=0; j<prisustvaVjezbe.length; j++) {
+            if(prisustvaVjezbe[h] != null && studenti[e].id == prisustvaVjezbe[h].idStudenta && prisustvaVjezbe[h].prisutan == false) brojacVjezbe++;
+          }
+
+          niz[e].stavkeOcjenjivanja.push({
+            naziv: "Minusi na predavanjima",
+            bodovi: brojacPredavanja
+          });
+          niz[e].stavkeOcjenjivanja.push({
+            naziv: "Minusi na tutorijalima",
+            bodovi: brojacTutorijali
+          });
+          niz[e].stavkeOcjenjivanja.push({
+            naziv: "Minusi na vjezbama",
+            bodovi: brojacVjezbe
+          });
+        }
+
+        
+        res.json(niz);
+      });
+
+
+    });
+  });
+});
 app.listen(31912, () => {
   console.log("Server started, listening at port 31912");
 });
