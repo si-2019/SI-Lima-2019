@@ -39,7 +39,7 @@ app.get("/dajSveZahtjeve", async function(req, res) {
       res.json(odgovor);
     });
   });
-  app.get("/dajSveZahtjeveStudenta/:idStudenta", async function(req, res) {
+  app.get("/dajSveZahtjeveStudent/:idStudenta", async function(req, res) {
   let odgovor = { zahtjevi: [] };
     var id=req.params.idStudenta;
     db.zahtjevZaPotvrdu.findAll({where:{idStudenta:id}}).then(async rez => {
