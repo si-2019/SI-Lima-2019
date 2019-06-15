@@ -27,6 +27,7 @@ db.prisustvoPredavanja = sequelize.import(
 db.prisustvoTutorijali = sequelize.import(
   __dirname + "/prisustvoTutorijali.js"
 );
+db.odsjek = sequelize.import(__dirname+"/odsjek.js");
 db.prisustvoVjezbe = sequelize.import(__dirname + "/prisustvoVjezbe.js");
 db.projekat = sequelize.import(__dirname + "/projekat.js");
 db.zadaca = sequelize.import(__dirname + "/zadaca.js");

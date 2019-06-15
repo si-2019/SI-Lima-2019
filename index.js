@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 require('./stari_zahtjevi.js')(app)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-app.get("/Izvjestaji/dataPredmetPoGodini/:predmetId/:godinaId/:filter/:datum",function(req,res){
+app.get("/Izvjestaji/dajPredmetPoGodini/:predmetId/:godinaId/:filter/:datum",function(req,res){
   let id_predmeta = req.params.predmetId;
   let id_godine = req.params.godinaId;
   let filter = req.params.filter;
@@ -635,6 +635,39 @@ app.post('/kreirajPotvrdu', function(req,res){
     res.json(rezultat);
   }) 
   })
+});
+app.get("/informacijeZaPotvrdu/:potvrdaId", function(req,res){
+   pId= req.params.potvrdaId;
+   
+   db.zahtjevZaPotvrdu.findOne({where:{id:pId}}).then(potvrda=>{
+     db.korisnik.findOne({where:{id: potvrda.idStudenta}}).then(studentp=>{
+        var student=[];
+        var detaljiOPohadjanju=[];
+        student.push({ime:studentp.ime});
+        student.push({prezime:studentp.prezime});
+        student.push({brojIndeksa:studentp.brojIndeksa});
+        student.push({mjestoRodjenja:studentp.mjestoRodjenja});
+        student.push({datumRodjenja:studentp.datumRodjenja});
+        student.push({kanton:studentp.kanton});
+        student.push({semestar:studentp.semestar});
+        student.push({drzavljanstvo:studentp.drzavljanstvo});
+         db.akademskaGodina.findOne({where:{aktuelna:'1'}}).then(godina=>{
+           detaljiOPohadjanju.push({akademskaGodina: godina.naziv});
+           detaljiOPohadjanju.push({ciklus: studentp.ciklus});
+           
+            db.odsjek.findOne({where:{idOdsjek: studentp.idOdsjek}}).then(odsjek=>{
+              detaljiOPohadjanju.push({smjer: odsjek.naziv});
+              db.svrha.findOne({where:{id:potvrda.idSvrhe}}).then(svrha=>{
+                  res.json({student:student, detaljiOPohadjanju: detaljiOPohadjanju, svrha:svrha.nazivSvrhe, datumObrade:svrha.datumObrade });
+              })
+                
+            })
+
+         })
+    
+        
+     })
+   })
 });
 app.listen(PORT, () => {
   console.log("Server started, listening at port 31912");
