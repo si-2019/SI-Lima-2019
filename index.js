@@ -428,7 +428,31 @@ app.get("/izvjestaj/ispit/:filter/:predmetId/:godinaId/:datum", function(
     db.predmet.findAll({attributes:['id', 'naziv'], where: {idProfesor:pId}}).then(p=>odgovor.predmeti.push(p));
     res.json(odgovor);
   });
+app.get('/getPredmetiProfesora',function(req,res){
+  let idProfesora  = req.query["profesorId"];
+  izlaz =[];
+  db.korisnik.findOne({where:{id:idProfesora}}).then(profa=>{
+    if(profa === null || profa === undefined)
+        res.json({message:"Nepostojeći korisnik!"});
+    else{
+      db.akademskaGodina.findAll().then(sveAkademskeGodine=>{
+        db.predmet.findAll({where:{idProfesor:idProfesora}}).then(sviProfesoroviPredmeti=>{
+          let jedinka = {godinaId:'',godinaNaziv:'',predmeti:[]}
+          sveAkademskeGodine.forEach(godina => {
+            jedinka.godinaId = godina.id;
+              jedinka.godinaNaziv=godina.naziv;
+            sviProfesoroviPredmeti.forEach(element => {
+              jedinka.predmeti.push({id:element.id,naziv:element.naziv});
+            });
+            izlaz.push(jedinka);
+          });
+          res.send(izlaz);res.end();
+        })  
 
+      })
+    }
+  });
+});
 app.listen(31912, () => {
   console.log("Server started, listening at port 31912");
 });
