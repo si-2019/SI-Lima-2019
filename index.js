@@ -514,7 +514,11 @@ app.get('/dataPredmetPoGodini',function(req,res){
     }
   })
 });
-
+app.get('/svrhe', function(req, res) {
+  db.svrha.findAll({attributes:['nazivSvrhe', 'id']}).then((result) => {
+        res.json(result);
+  });
+});
 app.listen(31912, () => {
   console.log("Server started, listening at port 31912");
 });
