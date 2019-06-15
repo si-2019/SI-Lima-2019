@@ -160,18 +160,11 @@ app.get("/Izvjestaji/dajPredmetPoGodini/:predmetId/:godinaId/:filter/:datum",fun
                                 let odgovor = predavanja.concat(tutorijali.concat(vjezbe));
                                 let vrati = [];
                                   for(let i=0;i<odgovor.length;i++){
-                                    hepek=predavanja[i].prisutan && tutorijali[i].prisutan && vjezbe[i].prisutan ? 10 : 0;
+                                    hepek=ostvareniBodoviZadaca[i].brojOstvarenihBodova+rezultati_ispitaPrveParcijale[i].bodovi+
+                                    rezultati_ispitaDrugeParcijale[i].bodovi+rezultati_ispitaUsmeni[i].bodovi+
+                                    predavanja[i].prisutan && tutorijali[i].prisutan && vjezbe[i].prisutan ? 10 : 0;
                                     vrati.push(hepek);
                                   }
-                                  for(let i=0;i<rezultati_ispitaPrveParcijale.length;i++)
-                                    vrati[i]+=rezultati_ispitaPrveParcijale[i].bodovi;
-                                  for(let i=0;i<rezultati_ispitaDrugeParcijale.length;i++)
-                                    vrati[i]+=rezultati_ispitaDrugeParcijale[i].bodovi;
-                                  for(let i=0;i<rezultati_ispitaUsmeni.length;i++)
-                                    vrati[i]+=rezultati_ispitaUsmeni[i].bodovi;
-                                  for(let i=0;i<ostvareniBodoviZadaca.length;i++)
-                                    vrati[i]+=ostvareniBodoviZadaca[i].bodovi;
-                                  
                                 res.send(vrati);res.end();
                               });
                             });
@@ -192,7 +185,7 @@ app.get("/Izvjestaji/dajPredmetPoGodini/:predmetId/:godinaId/:filter/:datum",fun
             });
           break;
           case "Ocjena":
-              db.predmetStudent.findAll({where:{idPredmet:p.id,idAkademskaGodina:id_godine}}).then(async ocjene=>{
+              db.predmetStudent.findAll({where:{idPredmet:p.id,idAkademskaGodina:id_godine,ocjena: { [Sequelize.Op.not]: null }}}).then(async ocjene=>{
                 let odg = []; for(let i=0;i<ocjene.length;i++) odg.push(ocjene[i].ocjena);
                 res.send(odg); res.end();
               });
@@ -217,8 +210,9 @@ app.get("/Izvjestaji/dajPredmetPoGodini/:predmetId/:godinaId/:filter/:datum",fun
               db.ispit.findAll({where:{idPredmet:p.id,tipIspita:"Drugi parcijalni",termin:{[Op.or]:{[Op.between]:[g.pocetak_zimskog_semestra,g.kraj_zimskog_semestra],[Op.between]:[g.pocetak_ljetnog_semestra,g.kraj_ljetnog_semestra]}}}}).
             then(async drugeParcijale=>{
               let kepec;
-              db.ispit.findAll({where:{idPredmet:p.id,tipIspita:"Usmeni",termin:{[Op.or]:{[Op.between]:[g.pocetak_zimskog_semestra,g.kraj_zimskog_semestra],[Op.between]:[g.pocetak_ljetnog_semestra,g.kraj_ljetnog_semestra]}}}}).
+              db.ispit.findAll({where:{idPredmet:p.id,tipIspita:"Usmeni"/*,termin:{[Op.or]:{[Op.between]:[g.pocetak_zimskog_semestra,g.kraj_zimskog_semestra],[Op.between]:[g.pocetak_ljetnog_semestra,g.kraj_ljetnog_semestra]}}*/}}).
             then(async usmeniIspiti=>{
+              console.log(usmeniIspiti);
               let kepec;
               for(let i=0;i<prveParcijale.length;i++) nizStavki.push({tip:"Prvi parcijalni",datum:prveParcijale[i].termin});
               for(let i=0;i<drugeParcijale.length;i++) nizStavki.push({tip:"Drugi parcijalni",datum:drugeParcijale[i].termin});
@@ -235,7 +229,7 @@ app.get("/Izvjestaji/dajPredmetPoGodini/:predmetId/:godinaId/:filter/:datum",fun
 
             });
           }catch{
-            //res.json({message:"Greška na serveru"});
+            res.json({message:"Greška na serveru"});
           }
           
           break;
@@ -361,7 +355,61 @@ app.get("/predmeti_studenta", function(req,res){
 else
 res.json({message:"Nemate dozvolu pristupa"});
 });
-
+app.get("/izvjestaj/ispit/:filter/:predmetId/:godinaId/:datum", function(
+  req,
+  res
+) {
+  var IzasloNaIspit;
+  var ukupnoStudenata;
+  var polozilo;
+  var bodovi = [];
+  var d = req.params.datum;
+  db.predmetStudent.findAll({
+      where: {
+        idPredmet: req.params.predmetId,
+        idAkademskaGodina: req.params.godinaId /*datum_upisa:d*/
+      }
+    })
+    .then(upisano => {
+      ukupnoStudenata = upisano.filter(
+        a => a.datum_upisa === null || a.datum_upisa >req.params.datum
+      );
+      db.ispit
+        .findAll({
+          where: {
+            idPredmet: req.params.predmetId,
+            tipIspita: req.params.filter,
+            termin: req.params.datum
+          }
+        })
+        .then(ispiti => {
+          var ispit = ispiti;
+          if (ispit.length === 0) {
+            res.json([{ message: "Nema ispita za datum: " + req.params.datum }]);
+          } else {
+            ispit = ispit[0];
+            db.ispitBodovi
+              .findAll({ where: { idIspita: ispit.idIspit } })
+              .then(rezultati => {
+                  IzasloNaIspit = rezultati.length;
+                polozilo = rezultati.filter(a => a.bodovi >= 10).length;
+              
+                for (var i = 0; i < rezultati.length; i++) {
+                  bodovi.push(rezultati[i].bodovi);
+                }
+                res.json([
+                  {
+                    izasloNaIspit: IzasloNaIspit ,
+                    ukupnoStudenata: ukupnoStudenata.length +1,
+                    polozilo: polozilo,
+                    data: bodovi
+                  }
+                ]);
+              });
+          }
+        });
+    });
+  });
 app.listen(31912, () => {
   console.log("Server started, listening at port 31912");
 });
