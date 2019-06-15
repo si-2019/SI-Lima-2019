@@ -39,6 +39,33 @@ app.get("/dajSveZahtjeve", async function(req, res) {
       res.json(odgovor);
     });
   });
+  app.get("/dajSveZahtjeveStudenta/:idStudenta", async function(req, res) {
+  let odgovor = { zahtjevi: [] };
+    var id=req.params.idStudenta;
+    db.zahtjevZaPotvrdu.findAll({where:{idStudenta:id}}).then(async rez => {
+      for (let i = 0; i < rez.length; ++i) {
+        let rez1 = await db.svrha.findOne({ where: { id: rez[i].idSvrhe } });
+        let rez2 = await db.korisnik.findOne({
+          where: { id: rez[i].idStudenta }
+        });
+        let objekat = {
+          id: rez[i].id,
+          vrsta: rez1.nazivSvrhe,
+          datumZahtjeva: rez[i].datumZahtjeva,
+          oznacen: false,
+          info: {
+            idStudenta: rez2.id,
+            ime: rez2.ime,
+            prezime: rez2.prezime,
+            indeks: rez2.indeks
+          }
+        };
+        odgovor.zahtjevi.push(objekat);
+      }
+      console.log(odgovor);
+      res.json(odgovor);
+    });
+  });
   app.get("/dajObradjeneZahtjeve", async function(req, res) {
     let odgovor = { zahtjevi: [] };
     db.zahtjevZaPotvrdu.findAll({ where: { obradjen: true } }).then(async rez => {
