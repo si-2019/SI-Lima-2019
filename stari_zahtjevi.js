@@ -13,7 +13,7 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 module.exports = function(app){
-app.get("/dajSveZahtjeve", async function(req, res) {
+  app.get("/dajSveZahtjeve", async function(req, res) {
     let odgovor = { zahtjevi: [] };
     db.zahtjevZaPotvrdu.findAll().then(async rez => {
       for (let i = 0; i < rez.length; ++i) {
@@ -24,7 +24,9 @@ app.get("/dajSveZahtjeve", async function(req, res) {
         let objekat = {
           id: rez[i].id,
           vrsta: rez1.nazivSvrhe,
+          obradjen: rez[i].obradjen,
           datumZahtjeva: rez[i].datumZahtjeva,
+          datumObrade: rez[i].datumObrade,
           oznacen: false,
           info: {
             idStudenta: rez2.id,
@@ -39,10 +41,10 @@ app.get("/dajSveZahtjeve", async function(req, res) {
       res.json(odgovor);
     });
   });
-  app.get("/dajSveZahtjeveStudent/:idStudenta", async function(req, res) {
-  let odgovor = { zahtjevi: [] };
-    var id=req.params.idStudenta;
-    db.zahtjevZaPotvrdu.findAll({where:{idStudenta:id}}).then(async rez => {
+  app.get("/dajSveZahtjeveStudent/:studentId", async function(req, res) {
+    let studentId = req.params.studentId;
+    let odgovor = { zahtjevi: [] };
+    db.zahtjevZaPotvrdu.findAll({where: { idStudenta: studentId }}).then(async rez => {
       for (let i = 0; i < rez.length; ++i) {
         let rez1 = await db.svrha.findOne({ where: { id: rez[i].idSvrhe } });
         let rez2 = await db.korisnik.findOne({
@@ -51,7 +53,9 @@ app.get("/dajSveZahtjeve", async function(req, res) {
         let objekat = {
           id: rez[i].id,
           vrsta: rez1.nazivSvrhe,
+          obradjen: rez[i].obradjen,
           datumZahtjeva: rez[i].datumZahtjeva,
+          datumObrade: rez[i].datumObrade,
           oznacen: false,
           info: {
             idStudenta: rez2.id,
@@ -66,69 +70,23 @@ app.get("/dajSveZahtjeve", async function(req, res) {
       res.json(odgovor);
     });
   });
-  app.get("/dajObradjeneZahtjeve", async function(req, res) {
-    let odgovor = { zahtjevi: [] };
-    db.zahtjevZaPotvrdu.findAll({ where: { obradjen: true } }).then(async rez => {
-      for (let i = 0; i < rez.length; ++i) {
-        let rez1 = await db.svrha.findOne({ where: { id: rez[i].idSvrhe } });
-        let rez2 = await db.korisnik.findOne({
-          where: { id: rez[i].idStudenta }
-        });
-        let objekat = {
-          id: rez[i].idZahtjev,
-          vrsta: rez1.nazivSvrhe,
-          datumZahtjeva: rez[i].datumZahtjeva,
-          oznacen: false,
-          info: {
-            idStudenta: rez2.id,
-            ime: rez2.ime,
-            prezime: rez2.prezime,
-            indeks: rez2.indeks
-          }
-        };
-        odgovor.zahtjevi.push(objekat);
-      }
-      res.json(odgovor);
-    });
-  });
-  app.get("/dajNeobradjeneZahtjeve", async function(req, res) {
-    let odgovor = { zahtjevi: [] };
-    db.zahtjevZaPotvrdu
-      .findAll({ where: { obradjen: false } })
-      .then(async rez => {
-        for (let i = 0; i < rez.length; ++i) {
-          let rez1 = await db.svrha.findOne({ where: { id: rez[i].idSvrhe } });
-          let rez2 = await db.korisnik.findOne({
-            where: { id: rez[i].idStudenta }
-          });
-          let objekat = {
-            id: rez[i].idZahtjev,
-            vrsta: rez1.nazivSvrhe,
-            datumZahtjeva: rez[i].datumZahtjeva,
-            oznacen: false,
-            info: {
-              idStudenta: rez2.id,
-              ime: rez2.ime,
-              prezime: rez2.prezime,
-              indeks: rez2.indeks
-            }
-          };
-          odgovor.zahtjevi.push(objekat);
-        }
-        res.json(odgovor);
-      });
-  });
   app.post("/obrada", async function(req, res) {
-    let ajdi = req.body.zahtjevi;
-    await ajdi.forEach(el => {
-      db.zahtjevZaPotvrdu.update(
-        { obradjen: true, datumObrade: Date.now() },
-        { where: { id: el } }
-      );
+    let zahtjevId = req.body.zahtjevId;
+    let datumObrade = Date.now();
+    await db.zahtjevZaPotvrdu.update(
+        { obradjen: true, datumObrade: datumObrade },
+        { where: { id: zahtjevId } }
+    ).then(()=>{
+      res.json(datumObrade);
     });
-  
-    res.sendStatus(200);
-    res.end();
+  });
+  app.post("/otkaziZahtjev", async function(req, res) {
+    let zahtjevId = req.body.zahtjevId;
+    await db.zahtjevZaPotvrdu.destroy(
+        { where: { id: zahtjevId } }
+    ).then(()=>{
+      res.json("Ok");
+    });
   });
   app.get("/potvrda/:index/student", async function(req, res) {
     let odgovor = { zahtjevi: [] };

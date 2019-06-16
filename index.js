@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 require('./stari_zahtjevi.js')(app)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-app.get("/Izvjestaji/dajPredmetPoGodini/:predmetId/:godinaId/:filter/:datum",function(req,res){
+app.get("/Izvjestaji/dataPredmetPoGodini/:predmetId/:godinaId/:filter/:datum",function(req,res){
   let id_predmeta = req.params.predmetId;
   let id_godine = req.params.godinaId;
   let filter = req.params.filter;
@@ -283,19 +283,16 @@ app.get("/izvjestaj/prosjekPoGodinama/:idStudenta", function(req, res) {
 });
 // Dodavanje precice
 app.post("/izvjestaji/dodajPrecicu", function(req, res){
-  var precica = req.body;
+  var precica = req.body.izvjestaj;
   db.sacuvaniIzvjestaji.findOne({ where:{studentId: precica['studentId'], predmetId:precica['predmetId'], godinaId:precica['godinaId']}}).then((izvjestaj)=>{
-    if(izvjestaj!=null)
-      return true;
-    else{
-      db.sacuvaniIzvjestaji.create({studentId: precica['studentId'], predmetId:precica['predmetId'], godinaId:precica['godinaId'], naziv:precica['naziv']})
-      return false;
-    }
-  }).then(postoji=>{
-    if (postoji=== true)
+    if(izvjestaj == null){
+      db.sacuvaniIzvjestaji.create({studentId: precica['studentId'], predmetId:precica['predmetId'], godinaId:precica['godinaId'], naziv:precica['naziv']}).then(()=>{
+        res.json({message:"ok"});
+      })
+    } else {
+      res.status(400);
       res.json({message:"Taj izvjestaj je vec sacuvan."});
-    else
-      res.json({message:"ok"});
+    }
   }
  )
 });
@@ -375,11 +372,17 @@ app.get("/izvjestaj/ispit/:filter/:predmetId/:godinaId/:datum", function(
           where: {
             idPredmet: req.params.predmetId,
             tipIspita: req.params.filter,
-            termin: req.params.datum
           }
         })
         .then(ispiti => {
-          var ispit = ispiti;
+          var ispit = [];
+          for(let i=0;i<ispiti.length;i++){
+            let d1 = ispiti[i].termin;
+            let d2 = new Date(req.params.datum);
+            let datum1 = `${d1.getFullYear()}-${d1.getMonth()}-${d1.getDay()}`;
+            let datum2 = `${d2.getFullYear()}-${d2.getMonth()}-${d2.getDay()}`;
+            if(datum1 == datum2)ispit = [ispiti[0]]
+          }
           if (ispit.length === 0) {
             res.json([{ message: "Nema ispita za datum: " + req.params.datum }]);
           } else {
@@ -433,15 +436,17 @@ app.get('/getPredmetiProfesora',function(req,res){
     else{
       db.akademskaGodina.findAll().then(sveAkademskeGodine=>{
         db.predmet.findAll({where:{idProfesor:idProfesora}}).then(sviProfesoroviPredmeti=>{
-          let jedinka = {godinaId:'',godinaNaziv:'',predmeti:[]}
-          sveAkademskeGodine.forEach(godina => {
-            jedinka.godinaId = godina.id;
+          for(let i=0;i<sveAkademskeGodine.length;i++){
+            let jedinka = {godinaId:'',godinaNaziv:'',predmeti:[]}
+            let godina = sveAkademskeGodine[i];
+              jedinka.godinaId = godina.id;
               jedinka.godinaNaziv=godina.naziv;
-            sviProfesoroviPredmeti.forEach(element => {
-              jedinka.predmeti.push({id:element.id,naziv:element.naziv});
-            });
-            izlaz.push(jedinka);
-          });
+              for(let j=0;j<sviProfesoroviPredmeti.length;j++){
+                let element = sviProfesoroviPredmeti[j];
+                jedinka.predmeti.push({id:element.id,naziv:element.naziv});
+              };
+              izlaz.push(jedinka);
+          }
           res.send(izlaz);res.end();
         })  
 
@@ -645,7 +650,7 @@ app.get("/informacijeZaPotvrdu/:potvrdaId", function(req,res){
         var detaljiOPohadjanju=[];
         student.push({ime:studentp.ime});
         student.push({prezime:studentp.prezime});
-        student.push({brojIndeksa:studentp.brojIndeksa});
+        student.push({indeks:studentp.indeks});
         student.push({mjestoRodjenja:studentp.mjestoRodjenja});
         student.push({datumRodjenja:studentp.datumRodjenja});
         student.push({kanton:studentp.kanton});
