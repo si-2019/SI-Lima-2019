@@ -525,199 +525,67 @@ app.get('/svrhe', function(req, res) {
   });
 });
 
-/*
-app.get('/izvjestajOSvemu/:predmetId/:godinaId', function(req, res) {
-  var predmetid = req.params.predmetId;
-  var godinaid = req.params.godinaId;
-  
-  db.predmetStudent.findAll({where: { idPredmet: predmetid, idAkademskaGodina: godinaid}}).then(function(upisani) {
-
-    db.ispit.findAll({where: {idPredmet : predmetid}}).then(function(ispiti) {
-
-      var listaPromise1 = [];
-      var listaPromise2 = [];
-      var listaPromise3 = [];
-      var listaPromise4 = [];
-      for(var a=0; a<upisani.length; a++) {
-        
-
-        listaPromise2.push(db.prisustvoPredavanja.findAll({where: {idPredmeta: predmetid}}));
-        listaPromise3.push(db.prisustvoTutorijali.findAll({where: {idPredmeta: predmetid}}));
-        listaPromise4.push(db.prisustvoVjezbe.findAll({where: {idPredmeta: predmetid}}));
-
-        for(var b=0; b<ispiti.length; b++) {
-          listaPromise1.push(db.ispitBodovi.findOne({where: {idIspita:ispiti[b].idIspit, idKorisnika:upisani[a].idStudent}}));
-        }
-      }
-
-      var rezultati;
-      var prisustvaPredavanja, prisustvaTutorijali, prisustvaVjezbe;
-      Promise.all(listaPromise1).then(function(_rezultati) {
-        rezultati = _rezultati;
-        return Promise.all(listaPromise2);
-      }).then(function(_prisustvaPredavanja) {
-        prisustvaPredavanja = _prisustvaPredavanja;
-        return Promise.all(listaPromise3);
-      }).then(function(_prisustvaTutorijali) {
-        prisustvaTutorijali = _prisustvaTutorijali;
-        return Promise.all(listaPromise4);
-      }).then(function(_prisustvaVjezbe) {
-
-        prisustvaVjezbe = _prisustvaVjezbe;
-
-        var listaPromise5 = [];
-        for(var d=0; d<upisani.length; d++) {
-          listaPromise5.push(db.korisnik.findAll({where: {id : upisani[d].idStudent}}));
-        }
-
-        return Promise.all(listaPromise5);
-      }).then(function(studenti) {
-        var niz = [];
-
-
-        //res.json(studenti);
-        for(var e=0; e<studenti.length; e++) {
-          niz.push({
-            ime: studenti[e][0].ime,
-            prezime: studenti[e][0].prezime,
-            stavkeOcjenjivanja: []
-          });
-          
-          for(var f=0; f<rezultati.length; f++) {
-            if(rezultati[f] != null && rezultati[f].idStudent == studenti[e].id) {
-              for(var g=0; g<ispiti.length; g++) {
-                if(ispiti[g].id == rezultati[f].idIspita) {
-                  niz[e].stavkeOcjenjivanja.push({
-                    naziv: ispiti[g].tipIspita + " " + ispiti[g].termin,
-                    bodovi: rezultati[f].bodovi
-                  });
-                }
-              }
-            }
-          }
-          var brojacPredavanja=0, brojacTutorijali=0, brojacVjezbe=0;
-          for(var h=0; h<prisustvaPredavanja.length; h++) {
-            if(prisustvaPredavanja[h] != null && studenti[e].id == prisustvaPredavanja[h].idStudenta && prisustvaPredavanja[h].prisutan == false) brojacPredavanja++;
-          }
-          for(var i=0; i<prisustvaTutorijali.length; i++) {
-            if(prisustvaTutorijali[h] != null && studenti[e].id == prisustvaTutorijali[h].idStudenta && prisustvaTutorijali[h].prisutan == false) brojacTutorijali++;
-          }
-          for(var j=0; j<prisustvaVjezbe.length; j++) {
-            if(prisustvaVjezbe[h] != null && studenti[e].id == prisustvaVjezbe[h].idStudenta && prisustvaVjezbe[h].prisutan == false) brojacVjezbe++;
-          }
-
-          niz[e].stavkeOcjenjivanja.push({
-            naziv: "Minusi na predavanjima",
-            bodovi: brojacPredavanja
-          });
-          niz[e].stavkeOcjenjivanja.push({
-            naziv: "Minusi na tutorijalima",
-            bodovi: brojacTutorijali
-          });
-          niz[e].stavkeOcjenjivanja.push({
-            naziv: "Minusi na vjezbama",
-            bodovi: brojacVjezbe
-          });
-        }
-
-        
-        res.json(niz);
-      });
-
-
-    });
-  });
-});
-*/
-
 app.get('/izvjestajOSvemu/:profesorId/:predmetId/:godinaId', function(req, res) {
-  var profesorid = req.params.profesorId;
-  var predmetid = req.params.predmetId;
-  var godinaid = req.params.godinaId;
-  var objekat = {};
-  db.predmet.findOne({where: {id: predmetid, idProfesor: profesorid}}).then(function(predmet) {
-    if(predmet == null) {
-      res.end(JSON.stringify(objekat));
-      return;
-    }
-    // res.json(predmet);
-    db.akademskaGodina.findOne({where: {id: godinaid}}).then(function(godina) {
-      if(godina == null)  {
-        res.end(JSON.stringify(objekat));
-        return;
-      }
-      // res.json(godina);
+  var predmetId = req.params.predmetId;
+  var godinaId = req.params.godinaId;
+  var rez={};
+  db.predmet.findOne({where: {id: predmetId}}).then(async predmet=>{
+    
+    db.akademskaGodina.findOne({where: {id: godinaId}}).then(godina=>{
+      rez.nazivGodine=godina.naziv;
+      rez.nazivPredmeta= predmet.naziv;
       db.ispit.findAll({where: {
         idPredmet: predmet.id,
-        // $or: [
-        //   { termin: { $lt: godina.kraj_zimskog_semestra, $gt: godina.pocetak_zimskog_semestra} },
-        //   { termin: { $lt: godina.kraj_ljetnog_semestra, $gt: godina.pocetak_ljetnog_semestra} }
-        // ]
-      }}).then(function(ispiti) {
-        let noviIspiti = [];
-        for(let i=0;i<ispiti.length;i++){
-          let d1 = ispiti[i].termin;
-          let p = new Date(godina.pocetak_zimskog_semestra);
-          let k = new Date(godina.kraj_ljetnog_semestra);
-          if(d1 > p && d1 < k)noviIspiti.push(ispiti[i]);
-        }
-        ispiti = noviIspiti;
-        if(!ispiti.length) {
-          res.end(JSON.stringify(objekat));
-          return;
-        }
-        var listaPromise = [];
-        let count = 0;
-        let idevi2 = [];
-        for(var a=0; a<ispiti.length; a++) {
-          idevi2.push(ispiti[a].idIspit);
-        }
-            db.ispitBodovi.findAll({where: {idIspita: {[Op.in]: idevi2}}}).then(function(rezultati) {
-              var listaPromise2 = [];
-              var idevi = [];
-              for(var b=0; b<rezultati.length; b++) {
-                var postoji = false;
-                for(c=0; c<idevi.length; c++) {
-                  if(rezultati[b].idKorisnika == idevi[c]) {
-                    postoji = true;
-                    break;
-                  }
-                }
-                if(!postoji) idevi.push(rezultati[b].idKorisnika);
-              }
-    
-              db.korisnik.findAll({where: {id : {[Op.in]: idevi}}}).then(function(studenti) {
-                objekat.nazivGodine = godina.naziv;
-                objekat.nazivPredmeta = predmet.naziv;
-                objekat.data = [];
-                for(var d=0; d<studenti.length; d++) {
-                  objekat.data.push({
-                    imeStudenta: studenti[d].ime,
-                    prezimeStudenta: studenti[d].prezime,
-                    indeks: studenti[d].indeks,
-                    stavkeOcjenjivanja: []
-                  });
-                  for(var e=0; e<rezultati.length; e++) {
-                    if(rezultati[e].idKorisnika == studenti[d].id) {
-                      for(var f=0; f<ispiti.length; f++) {
-                        if(rezultati[e].idIspita == ispiti[f].idIspit) {
-                          objekat.data[objekat.data.length-1].stavkeOcjenjivanja.push({
-                            naziv: ispiti[f].tipIspita + " " + ispiti[f].termin,
-                            brojBodova: rezultati[e].bodovi
-                          });
-                        }
-                      }
+        termin:{[Op.or]:{[Op.between]:[godina.pocetak_zimskog_semestra,godina.kraj_zimskog_semestra],[Op.between]:[godina.pocetak_ljetnog_semestra,godina.kraj_ljetnog_semestra]}}
+      }}).then(ispiti=>{
+          db.predmetStudent.findAll({where:{idPredmet:predmetId, idAkademskaGodina:godinaId}}).then(async studenti=>{
+            var data=[];
+            
+            for(var i =0; i<studenti.length; i++){
+              var ukupno=0;
+              var s =await db.korisnik.findOne({where:{id:studenti[i].idStudent}})
+              let dataJedna = {};
+              dataJedna.imeStudenta = s.ime;
+              dataJedna.prezimeStudenta = s.prezime;
+              dataJedna.indeks = s.indeks;
+              var stavke=[];
+              var zadaca= await db.zadaca.findAll({where:{idPredmet:predmetId}}); 
+              var bod=0;
+              for(j=0; j<zadaca.length; j++){
+                var zadatak = await db.zadatak.findAll({where:{idZadaca: zadaca[j].idZadaca}});
+                for(k=0; k<zadatak.length; k++){
+                    var sz = await db.student_zadatak.findOne({where:{idZadatak: zadatak[k].idZadatak, idStudent: studenti[i].idStudent}});
+                    if(sz!==null){
+                      bod+= sz.brojOstvarenihBodova ;
                     }
-                  }
                 }
-                res.json(objekat);
-              });
-            });
-      });
-    });
-  });
+              }
+              stavke.push({naziv: "Zadaca"  , brojBodova:bod});
+              ukupno+= bod +10;
+              stavke.push({naziv: "Prisustvo", brojBodova:"10" });
+              dataJedna.stavkeOcjenjivanja = stavke;
+              for(var j=0; j<ispiti.length; j++){
+                var ispit = await db.ispitBodovi.findOne({where:{idIspita:ispiti[j].idIspit, idKorisnika:s.id}});
+                if(ispit!==null){
+                  ukupno+=ispit.bodovi;
+                  stavke.push({naziv: ispiti[j].tipIspita + " " + ispiti[j].termin.toString().substr(3,7) , brojBodova:ispit.bodovi});
+                }
+              }
+              stavke.push({naziv: "Ukupno"  , brojBodova:ukupno});
+              if(studenti[i].ocjena!==null){
+                
+                stavke.push({naziv: "Ocjena", brojBodova:studenti[i].ocjena});
+              }
+              data.push(dataJedna);
+            }
+            
+            rez.data =data;
+            res.json(rez);
+          })
+        })
+    })
+  })
 });
-
 
 app.post('/kreirajPotvrdu', function(req,res){
   var potvrda= req.body;
