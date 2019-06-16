@@ -649,64 +649,70 @@ app.get('/izvjestajOSvemu/:profesorId/:predmetId/:godinaId', function(req, res) 
       // res.json(godina);
       db.ispit.findAll({where: {
         idPredmet: predmet.id,
-        $or: [
-          { termin: { $lt: godina.kraj_zimskog_semestra, $gt: pocetak_zimskog_semestra} },
-          { termin: { $lt: godina.kraj_ljetnog_semestra, $gt: pocetak_ljetnog_semestra} }
-        ]
+        // $or: [
+        //   { termin: { $lt: godina.kraj_zimskog_semestra, $gt: godina.pocetak_zimskog_semestra} },
+        //   { termin: { $lt: godina.kraj_ljetnog_semestra, $gt: godina.pocetak_ljetnog_semestra} }
+        // ]
       }}).then(function(ispiti) {
+        let noviIspiti = [];
+        for(let i=0;i<ispiti.length;i++){
+          let d1 = ispiti[i].termin;
+          let p = new Date(godina.pocetak_zimskog_semestra);
+          let k = new Date(godina.kraj_ljetnog_semestra);
+          if(d1 > p && d1 < k)noviIspiti.push(ispiti[i]);
+        }
+        ispiti = noviIspiti;
         if(!ispiti.length) {
           res.end(JSON.stringify(objekat));
           return;
         }
-        res.end(ispiti);
         var listaPromise = [];
+        let count = 0;
+        let idevi2 = [];
         for(var a=0; a<ispiti.length; a++) {
-          listaPromise.push(db.ispitBodovi.findOne({where: {idIspita: ispiti[a].id}}));
+          idevi2.push(ispiti[a].idIspit);
         }
-
-        Promise.all(listaPromise).then(function(rezultati) {
-          
-          var listaPromise2 = [];
-          var idevi = [];
-          for(var b=0; b<rezultati.length; b++) {
-            var postoji = false;
-            for(c=0; c<idevi.length; c++) {
-              if(rezultati[b].idKorisnika == idevi[c]) {
-                postoji = true;
-                break;
+            db.ispitBodovi.findAll({where: {idIspita: {[Op.in]: idevi2}}}).then(function(rezultati) {
+              var listaPromise2 = [];
+              var idevi = [];
+              for(var b=0; b<rezultati.length; b++) {
+                var postoji = false;
+                for(c=0; c<idevi.length; c++) {
+                  if(rezultati[b].idKorisnika == idevi[c]) {
+                    postoji = true;
+                    break;
+                  }
+                }
+                if(!postoji) idevi.push(rezultati[b].idKorisnika);
               }
-            }
-            if(!postoji) idevi.push(rezultati[b].idKorisnika);
-          }
-
-          db.korisnik.findAll({where: {id : {in: idevi}}}).then(function(studenti) {
-            objekat.nazivGodine = godina.naziv;
-            objekat.nazivPredmeta = predmet.naziv;
-            objekat.data = [];
-            for(var d=0; d<studenti.length; d++) {
-              objakat.data.push({
-                imeStudenta: studenti[d].ime,
-                prezimeStudenta: studenti[d].prezime,
-                indeks: studenti[d].indeks,
-                stavkeOcjenjivanja: []
-              });
-              for(var e=0; e<rezultati.length; e++) {
-                if(rezultati[e].idKorisnika == studenti[d].id) {
-                  for(var f=0; f<ispiti.length; f++) {
-                    if(rezultati[e].idIspita == ispiti[f].id) {
-                      objekat.data.stavkeOcjenjivanja.push({
-                        naziv: ispiti[f].tipIspita + " " + ispiti[f].termin,
-                        brojBodova: rezultati[e].bodovi
-                      });
+    
+              db.korisnik.findAll({where: {id : {[Op.in]: idevi}}}).then(function(studenti) {
+                objekat.nazivGodine = godina.naziv;
+                objekat.nazivPredmeta = predmet.naziv;
+                objekat.data = [];
+                for(var d=0; d<studenti.length; d++) {
+                  objekat.data.push({
+                    imeStudenta: studenti[d].ime,
+                    prezimeStudenta: studenti[d].prezime,
+                    indeks: studenti[d].indeks,
+                    stavkeOcjenjivanja: []
+                  });
+                  for(var e=0; e<rezultati.length; e++) {
+                    if(rezultati[e].idKorisnika == studenti[d].id) {
+                      for(var f=0; f<ispiti.length; f++) {
+                        if(rezultati[e].idIspita == ispiti[f].idIspit) {
+                          objekat.data[objekat.data.length-1].stavkeOcjenjivanja.push({
+                            naziv: ispiti[f].tipIspita + " " + ispiti[f].termin,
+                            brojBodova: rezultati[e].bodovi
+                          });
+                        }
+                      }
                     }
                   }
                 }
-              }
-            }
-
-            res.json(objekat);
-          });
-        });
+                res.json(objekat);
+              });
+            });
       });
     });
   });
