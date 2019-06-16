@@ -525,7 +525,7 @@ app.get('/svrhe', function(req, res) {
   });
 });
 
-
+/*
 app.get('/izvjestajOSvemu/:predmetId/:godinaId', function(req, res) {
   var predmetid = req.params.predmetId;
   var godinaid = req.params.godinaId;
@@ -628,6 +628,91 @@ app.get('/izvjestajOSvemu/:predmetId/:godinaId', function(req, res) {
     });
   });
 });
+*/
+
+app.get('/izvjestajOSvemu/:profesorId/:predmetId/:godinaId', function(req, res) {
+  var profesorid = req.params.profesorId;
+  var predmetid = req.params.predmetId;
+  var godinaid = req.params.godinaId;
+  var objekat = {};
+  db.predmet.findOne({where: {id: predmetid, idProfesor: profesorid}}).then(function(predmet) {
+    if(predmet == null) {
+      res.end(JSON.stringify(objekat));
+      return;
+    }
+    // res.json(predmet);
+    db.akademskaGodina.findOne({where: {id: godinaid}}).then(function(godina) {
+      if(godina == null)  {
+        res.end(JSON.stringify(objekat));
+        return;
+      }
+      // res.json(godina);
+      db.ispit.findAll({where: {
+        idPredmet: predmet.id,
+        $or: [
+          { termin: { $lt: godina.kraj_zimskog_semestra, $gt: pocetak_zimskog_semestra} },
+          { termin: { $lt: godina.kraj_ljetnog_semestra, $gt: pocetak_ljetnog_semestra} }
+        ]
+      }}).then(function(ispiti) {
+        if(!ispiti.length) {
+          res.end(JSON.stringify(objekat));
+          return;
+        }
+        res.end(ispiti);
+        var listaPromise = [];
+        for(var a=0; a<ispiti.length; a++) {
+          listaPromise.push(db.ispitBodovi.findOne({where: {idIspita: ispiti[a].id}}));
+        }
+
+        Promise.all(listaPromise).then(function(rezultati) {
+          
+          var listaPromise2 = [];
+          var idevi = [];
+          for(var b=0; b<rezultati.length; b++) {
+            var postoji = false;
+            for(c=0; c<idevi.length; c++) {
+              if(rezultati[b].idKorisnika == idevi[c]) {
+                postoji = true;
+                break;
+              }
+            }
+            if(!postoji) idevi.push(rezultati[b].idKorisnika);
+          }
+
+          db.korisnik.findAll({where: {id : {in: idevi}}}).then(function(studenti) {
+            objekat.nazivGodine = godina.naziv;
+            objekat.nazivPredmeta = predmet.naziv;
+            objekat.data = [];
+            for(var d=0; d<studenti.length; d++) {
+              objakat.data.push({
+                imeStudenta: studenti[d].ime,
+                prezimeStudenta: studenti[d].prezime,
+                indeks: studenti[d].indeks,
+                stavkeOcjenjivanja: []
+              });
+              for(var e=0; e<rezultati.length; e++) {
+                if(rezultati[e].idKorisnika == studenti[d].id) {
+                  for(var f=0; f<ispiti.length; f++) {
+                    if(rezultati[e].idIspita == ispiti[f].id) {
+                      objekat.data.stavkeOcjenjivanja.push({
+                        naziv: ispiti[f].tipIspita + " " + ispiti[f].termin,
+                        brojBodova: rezultati[e].bodovi
+                      });
+                    }
+                  }
+                }
+              }
+            }
+
+            res.json(objekat);
+          });
+        });
+      });
+    });
+  });
+});
+
+
 app.post('/kreirajPotvrdu', function(req,res){
   var potvrda= req.body;
   var iag= potvrda.idAkademskeGodine;
