@@ -9,7 +9,7 @@ const Op = Sequelize.Op;
 
 db.sequelize.sync().then(function() {});
 const app = express();
-app.use(cors());
+//app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 module.exports = function(app){
