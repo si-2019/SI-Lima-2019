@@ -1,6 +1,8 @@
 const Sequelize = require("sequelize");
 
-const sequelize = new Sequelize("bREZd5lSqZ", "bREZd5lSqZ", "vdPjFjFYz3", {
+
+//const sequelize = new Sequelize("bREZd5lSqZ", "bREZd5lSqZ", "vdPjFjFYz3", {
+const sequelize = new Sequelize("TYQcLL35gV", "TYQcLL35gV", "BLysSj9ZrP", {
   host: "remotemysql.com",
   dialect: "mysql",
   logging: false
