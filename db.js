@@ -3,8 +3,9 @@ const Sequelize = require("sequelize");
 
 //const sequelize = new Sequelize("bREZd5lSqZ", "bREZd5lSqZ", "vdPjFjFYz3", {
 const sequelize = new Sequelize("TYQcLL35gV", "TYQcLL35gV", "BLysSj9ZrP", {
-  host: "remotemysql.com",
+  host: "mysql-3213-0.cloudclusters.net",
   dialect: "mysql",
+  port: 10021,
   logging: false
 });
 
